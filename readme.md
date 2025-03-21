@@ -8,4 +8,5 @@ install for anyone using this computer
 
 使用默认安装位置 ("C:\Program Files\Tesseract-OCR")
 
-### requirement
+### requirements
+`pip install -r requirements.txt`
