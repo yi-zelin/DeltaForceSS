@@ -1,35 +1,98 @@
 departments:
   tech:
-    - M249轻机枪
-    - QJB201轻机枪
-    - PKM通用机枪
-    - M4A1突击步枪
-    - AUG突击步枪
-    - SCAR-H战斗步枪
-    - P90冲锋枪
-    - QCQ171冲锋枪
-    - SR-3M紧凑突击步枪
-    - SKS射手步枪
-    - AKM突击步枪
-    - M700狙击步枪
-    - PSG-1射手步枪
-    - SVD狙击步枪
-    - 腾龙突击步枪
-    - M14射手步枪
-    - AK-12突击步枪
+    guns:
+      - M249轻机枪
+      - QJB201轻机枪
+      - PKM通用机枪
+      - M4A1突击步枪
+      - AUG突击步枪
+      - SCAR-H战斗步枪
+      - P90冲锋枪
+      - QCQ171冲锋枪
+      - SR-3M紧凑突击步枪
+      - SKS射手步枪
+      - AKM突击步枪
+      - M700狙击步枪
+      - PSG-1射手步枪
+      - SVD狙击步枪
+      - 腾龙突击步枪
+      - M14射手步枪
+      - AK-12突击步枪
   work:
+    level_6:
+      - 7.62x54R SNB
+      - 7.62x51mm M61
+      - 6.8x51mm AP
+      - .338 Lap Mag AP
+    level_5:
+      - 9x39mm BP
+      - 7.62x54R BT
+      - 7.62x51mm M62
+      - 7.62x39mm AP
+      - 6.8x51mm Hybrid
+      - 5.8x42mm DVC12
+      - 5.7x28mm SS190
+      - 5.56x45mm M995
+      - 5.45x39mm BS
+      - 4.6x30mm AP SX
+      - 12.7x55mm PS12B
+    level_4:
+      - 9x39mm SP6
+      - 9x19mm PBP
+      - 7.62x54R LPS
+      - 7.62x51mm M80
+      - 7.62x39mm BP
+      - 6.8x51mm FMJ
+      - 5.8x42mm DBP10
+      - 5.7x28mm SS193
+      - 5.56x45mm M855A1
+      - 5.45x39mm BT
+      - 4.6x30mm FMJ SX
+      - 12.7x55mm PD12双头弹
+      - 12.7x55mm PS12
+      - 12 Gauge独头 AP-20
+      - .50 AE FMJ
+      - .45 ACP AP
+      - .357 Magnum FMJ
   medical:
-    - 高级护甲维修组合
-    - 高级头盔维修组合
-    - 精密护甲维修组合
-    - 精密头盔维修组合
-    - 战地医疗箱
-    - 体能激活针
-    - OE2战斗兴奋剂
-    - 感知激活针
-    - M1肌肉强化针
-    - 去甲肾上腺素
+    level_6:
+      - 高级护甲维修组合
+      - 高级头盔维修组合
+    level_5:
+      - 精密护甲维修组合
+      - 精密头盔维修组合
+      - 战地医疗箱
+    level_3:
+      - 体能激活针
+      - OE2战斗兴奋剂
+      - 感知激活针
+      - M1肌肉强化针
+      - 去甲肾上腺素
   armor:
+    level_6:
+      - DICH-9重型头盔
+      - GT5指挥官头盔
+      - 泰坦防弹装甲
+      - 金刚防弹衣
+      - 特里克MAS2.0装甲
+      - GTO重型战术背包
+      - D7战术背包
+      - DAR突击手胸挂
+    level_5:
+      - 黑鹰野战胸挂
+      - 飓风战术胸挂
+      - DICH-1战术头盔
+      - GN 重型头盔
+      - H09 防爆头盔
+      - Mask-1铁壁头盔
+      - 重型突击背心
+      - FS复合防弹衣
+      - Hvk-2防弹衣
+      - 精英防弹背心
+      - GT5野战背包
+      - D3战术登山包
+      - HLS-2重型背包
+      - ALS背负系统
 
 departments_coords:
   main_page:
@@ -58,8 +121,17 @@ departments_coords:
       timmer_size: [100, 22]
 
   standard_screen: [1920, 1080]
+  list_point: [182, 162]
+  list_size: [368, 816]
+  item_size: [368, 84]
+
+  build_pixel: [1682, 950]
+  buy_pixel: [866, 873]
+
   h_row_with_margin: 102
-  list: [180, 200]
-  list_size: [370, 780]
-  build_center: [1682, 950]
-  buy_center: [866, 873]
+
+OCR_configs:
+  tech: r'--psm 7 -l chi_sim'
+  work: r'--psm 7 -l chi_sim -c tessedit_char_whitelist=' 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz双头弹独箭形号霰射鼠'
+  medical: r'--psm 7 -l chi_sim'
+  armor: r'--psm 7 -l chi_sim'
