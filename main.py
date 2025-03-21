@@ -99,16 +99,21 @@ def OCR_is_free(image):
         return False
     return match_score > 50
 
-''' 0 for in progress, 1 for done, 2 for not started '''
+
+''' 
+    0: not started
+    1: in progress
+    2: done 
+'''
 def department_status(dep_coords):
     center_img = pick_region(dep_coords['free'], dep_coords['free_size'])
     if OCR_is_free(center_img):
-        return 2
+        return 0
     timmer_img = pick_region(dep_coords['timmer'], dep_coords['timmer_size'])
     remain_time = OCR_remain_time(timmer_img)
     if remain_time is None:
-        return 1
-    return 0
+        return 2
+    return 1
 
 def main():
     # time.sleep(2)
