@@ -1,4 +1,6 @@
 # Mar 20, 2025
+使用虚拟环境! (不用也行 doge)
+
 ### Tesseract
 [安装 Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
 
