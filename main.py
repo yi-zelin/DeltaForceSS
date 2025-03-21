@@ -166,7 +166,7 @@ def list_cell_detector(list_edge_img, list_OCR_img):
     list_size = config['departments_coords']['list_size']
     item_size = config['departments_coords']['item_size']
     minLength = list_size[0] * 0.8
-    minArea = item_size[0] * item_size[1] * 0.8
+    minArea = int(item_size[0] * item_size[1] * 0.8)
 
     lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=10)
     debug_visualize_lines(list_edge_img, lines, LIST_ITEMS_DIR)
@@ -203,5 +203,6 @@ def main():
 
 
 # main()
+time.sleep(2)
 config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
 match_list_items()
