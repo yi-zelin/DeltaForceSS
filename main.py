@@ -3,116 +3,119 @@ import numpy as np
 import os
 import shutil
 import pytesseract
+import pyautogui
+import yaml
+import re
+import time
+from thefuzz import fuzz
 
-# Tesseract OCR path
-TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-# Define the output folder path
+with open('config.yaml', 'r', encoding='utf-8') as fin:
+    config = yaml.load(fin, Loader=yaml.FullLoader)
+    
+SCALE_FACTOR = 2
 OUTPUT_DIR = './log'
 
 def setup_output_directory(output_dir):
-    # Create or clear the output directory.
     if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)  # Delete the folder and its contents
-    os.makedirs(output_dir)  # Create the folder
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
 
-def crop_image(image, top_ratio=0.37, bottom_ratio=0.85):
-    # Crop the top and bottom of the image.
-    height = image.shape[0]
-    crop_top = int(height * top_ratio)  # Crop the top
-    crop_bottom = int(height * bottom_ratio)  # Keep the bottom part
-    return image[crop_top:crop_bottom, :]
+def scale_coords(coords):
+    if isinstance(coords, (list, tuple)):
+        return [int(x * SCALE_FACTOR) for x in coords]
+    elif isinstance(coords, dict):
+        return {k: scale_coords(v) for k, v in coords.items()}
+    return coords
 
-def preprocess_image(image):
-    # Convert the image to grayscale and perform edge detection.
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 50, 150)
-    return gray, edges
+def full_screenshot():
+    screenshot = np.array(pyautogui.screenshot())
+    gray = screenshot[:, :, 0]  # Blue channel
+    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    
+    setup_output_directory(OUTPUT_DIR)
+    cv2.imwrite(os.path.join(OUTPUT_DIR, 'full_screenshot.png'), binary)
+    cv2.imwrite(os.path.join(OUTPUT_DIR, 'full_screenshot_nm.png'), screenshot)
 
-def detect_vertical_lines(edges, height, min_line_length_ratio=0.4):
-    # Detect vertical lines using Hough Line Transform.
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=100, minLineLength=100, maxLineGap=10)
-    vertical_lines = []
-    if lines is not None:
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            line_length = abs(y2 - y1)  # Calculate line length
-            if abs(x1 - x2) < 5 and line_length > min_line_length_ratio * height:  # Allow slight tilt and length greater than min_line_length_ratio
-                vertical_lines.append(x1)
-    return sorted(vertical_lines)  # Sort by x-coordinate
+def pick_region(point, size):
+    screenshot_path = os.path.join(OUTPUT_DIR, 'full_screenshot.png')
+    if not os.path.exists(screenshot_path):
+        raise FileNotFoundError(f"File not found: {screenshot_path}")
 
-def crop_based_on_vertical_lines(image, vertical_lines, height, width, min_area_ratio=0.1):
-    # Crop the image based on vertical lines and filter by area.
-    cropped_images = []
-    for i in range(len(vertical_lines) - 1):
-        x1 = vertical_lines[i]
-        x2 = vertical_lines[i + 1]
-        
-        # Check if the cropping area is valid
-        if x1 >= x2 or x1 < 0 or x2 > width:
-            print(f"Skipping invalid cropping area: x1={x1}, x2={x2}")
-            continue
-        
-        cropped = image[:, x1:x2]  # Crop the image
-        if cropped.size == 0:  # Check if the cropped image is empty
-            print(f"Cropped image is empty: x1={x1}, x2={x2}")
-            continue
-        
-        # Check if the cropped image area is greater than a threshold
-        cropped_area = cropped.shape[0] * cropped.shape[1]  # Calculate the cropped image area
-        if cropped_area < min_area_ratio * (height * width):  # Skip if the area is too small
-            print(f"Cropped image area too small: x1={x1}, x2={x2}, area={cropped_area}")
-            continue
-        
-        cropped_images.append(cropped)
-    return cropped_images
+    screenshot = cv2.imread(screenshot_path, cv2.IMREAD_COLOR)
+    if screenshot is None:
+        raise ValueError("Failed to read!")
 
-def save_cropped_images(cropped_images, output_dir):
-    # Save cropped images and perform OCR on each.
-    for i, cropped in enumerate(cropped_images):
-        # Convert to grayscale (keep only the blue channel)
-        gray = cropped[:, :, 0]  # Blue channel
-        
-        # Binarization
-        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-        
-        # Save binary image
-        cv2.imwrite(os.path.join(output_dir, f'binary_{i + 1}.png'), binary)
-        
-        # OCR recognition
-        pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
-        text = pytesseract.image_to_string(binary, lang='chi_sim')  # Use the Simplified Chinese language pack
+    x, y = point
+    w, h = size
+    cropped = screenshot[y:y+h, x:x+w]
 
-        # Save the recognition result
-        with open(os.path.join(output_dir, f'OCR_{i + 1}.txt'), 'w', encoding='utf-8') as f:
-            f.write(text)
+    cv2.imwrite(os.path.join(OUTPUT_DIR, f'cropped_{x}_{y}_{w}_{h}.png'), cropped)
+
+    return cropped
+
+def show_image(image):
+    cv2.imshow('image', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def click_position(position):
+    pyautogui.moveTo(position[0], position[1], duration=0.1)
+    pyautogui.click()
+    
+def get_names_form_list(image):
+    return;
+
+def scroll_down_x4(position):
+    pyautogui.moveTo(position[0], position[1], duration=0.1)
+    for _ in range(4):
+        pyautogui.scroll(-1)
+        pyautogui.sleep(0.1)
+
+def best_match_item(str1, department):
+    max_score = 0
+    best_match = None
+    for item in department:
+        score = fuzz.partial_ratio(str1, item)
+        # print(f'{item}: {score}')
+        if score > max_score:
+            max_score = score
+            best_match = item
+    return best_match, max_score
+
+def OCR_remain_time(image):
+    t_config = r'--psm 7 -c tessedit_char_whitelist=0123456789:'
+    text = pytesseract.image_to_string(image, config=t_config)
+    time_pattern = r'\d{2}:\d{2}:\d{2}'
+    match = re.search(time_pattern, text)
+    if match:
+        return match.group()
+    return None
+
+def OCR_is_free(image):
+    t_config = r'-l chi_sim --psm 7'
+    text = pytesseract.image_to_string(image, config=t_config)
+    _, match_score = best_match_item(text, ['设备处于空闲状态'])
+    if match_score is None:
+        return False
+    return match_score > 50
+
+''' 0 for in progress, 1 for done, 2 for not started '''
+def department_status(dep_coords):
+    center_img = pick_region(dep_coords['free'], dep_coords['free_size'])
+    if OCR_is_free(center_img):
+        return 2
+    timmer_img = pick_region(dep_coords['timmer'], dep_coords['timmer_size'])
+    remain_time = OCR_remain_time(timmer_img)
+    if remain_time is None:
+        return 1
+    return 0
 
 def main():
-    # Setup output directory
-    setup_output_directory(OUTPUT_DIR)
+    # time.sleep(2)
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    # full_screenshot()
+    for dep, coords in config['departments_coords']['main_page'].items():
+        print(f'{dep}: {department_status(coords)}')
 
-    # Read the image
-    image = cv2.imread('./.test/test3.png')
-    if image is None:
-        raise ValueError("Image file not found or cannot be read!")
-    height, width, _ = image.shape
-
-    # Crop the image (top 37% and bottom 15%)
-    image = crop_image(image, top_ratio=0.37, bottom_ratio=0.85)
-
-    # Preprocess the image (grayscale and edge detection)
-    gray, edges = preprocess_image(image)
-
-    # Detect vertical lines
-    vertical_lines = detect_vertical_lines(edges, height, min_line_length_ratio=0.4)
-
-    # Crop the image based on vertical lines
-    cropped_images = crop_based_on_vertical_lines(image, vertical_lines, height, width, min_area_ratio=0.1)
-
-    # Save cropped images and perform OCR
-    save_cropped_images(cropped_images, OUTPUT_DIR)
-
-    print(f"Processing complete! Results saved to {OUTPUT_DIR}.")
-
-if __name__ == "__main__":
-    main()
+main()

@@ -1,0 +1,65 @@
+departments:
+  tech:
+    - M249轻机枪
+    - QJB201轻机枪
+    - PKM通用机枪
+    - M4A1突击步枪
+    - AUG突击步枪
+    - SCAR-H战斗步枪
+    - P90冲锋枪
+    - QCQ171冲锋枪
+    - SR-3M紧凑突击步枪
+    - SKS射手步枪
+    - AKM突击步枪
+    - M700狙击步枪
+    - PSG-1射手步枪
+    - SVD狙击步枪
+    - 腾龙突击步枪
+    - M14射手步枪
+    - AK-12突击步枪
+  work:
+  medical:
+    - 高级护甲维修组合
+    - 高级头盔维修组合
+    - 精密护甲维修组合
+    - 精密头盔维修组合
+    - 战地医疗箱
+    - 体能激活针
+    - OE2战斗兴奋剂
+    - 感知激活针
+    - M1肌肉强化针
+    - 去甲肾上腺素
+  armor:
+
+departments_coords:
+  main_page:
+    tech_coords:
+      free: [228, 770]
+      free_size: [170,738]
+      timmer: [180, 798]
+      timmer_size: [100, 22]
+
+    work_coords:
+      free: [662, 770]
+      free_size: [170, 738]
+      timmer: [614, 798]
+      timmer_size: [100, 22]
+
+    medical_coords:
+      free: [1090, 770]
+      free_size: [170, 738]
+      timmer: [1046, 798]
+      timmer_size: [100, 22]
+
+    armor_coords:
+      free: [1526, 770]
+      free_size: [170, 738]
+      timmer: [1478, 798]
+      timmer_size: [100, 22]
+
+  standard_screen: [1920, 1080]
+  h_row_with_margin: 102
+  list: [180, 200]
+  list_size: [370, 780]
+  build_center: [1682, 950]
+  buy_center: [866, 873]
