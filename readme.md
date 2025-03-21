@@ -4,7 +4,7 @@
 
 install for anyone using this computer
 
-![alt text](.img\image.png)
+![alt text](.img/image.png)
 
 使用默认安装位置 ("C:\Program Files\Tesseract-OCR")
 
