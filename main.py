@@ -12,10 +12,15 @@ from rapidfuzz import fuzz
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
+    
+with open('user_config.yaml', 'r', encoding='utf-8') as fin:
+    user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
-SCALE_FACTOR = 2
+SCALE_FACTOR = user_config['SCALE_FACTOR']
 OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
+DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
+TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
 # Setup
@@ -34,22 +39,24 @@ def scale_coords(coords):
 
 # Mouse
 def click_position(position):
-    pyautogui.moveTo(position[0], position[1], duration=0.1)
+    pyautogui.moveTo(position[0], position[1], duration=0.3)
     pyautogui.click()
 
 def scroll_down_x4(position):
-    pyautogui.moveTo(position[0], position[1], duration=0.1)
+    pyautogui.moveTo(position[0], position[1], duration=0.3)
     for _ in range(4):
         pyautogui.scroll(-1)
         pyautogui.sleep(0.1)
+    time.sleep(1)
 
 def craft(coordination):
     build_position = config['departments_coords']['build_position']
     click_position(coordination)
-    time.sleep(3)
+    time.sleep(1)
     click_position(build_position)
     time.sleep(3)
     keyboard.send('esc')
+    time.sleep(1)
 
 
 # Image
@@ -69,6 +76,7 @@ def pick_region(point, size, prefix='cropped', mother_file=f"{OUTPUT_DIR}/full_s
     x, y = point
     w, h = size
     cropped = screenshot[y:y+h, x:x+w]
+    print(f'{x}, {y}, {w}, {h}')
 
     cv2.imwrite(os.path.join(dir, f'{prefix}_{x}_{y}_{w}_{h}.png'), cropped)
     return cropped
@@ -95,7 +103,8 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 
 # Screenshot
-def full_screenshot(dir=OUTPUT_DIR):
+def full_screenshot(dir):
+    # pyautogui.moveTo(0, 0, duration=0.3)
     screenshot = np.array(pyautogui.screenshot())
     screenshot_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
     screenshot = adjust_gamma(screenshot_bgr, gamma=0.8)
@@ -172,10 +181,12 @@ def department_status(dep_coords):
     1: in progress
     2: done
     '''
-    center_img = pick_region(dep_coords['free'], dep_coords['free_size'])
+    print('center_img')
+    center_img = pick_region(dep_coords['free'], dep_coords['free_size'], 'dash_page', f"{DASH_PAGE_DIR}/full_screenshot.png", DASH_PAGE_DIR)
     if OCR_is_free(center_img):
         return 0
-    timmer_img = pick_region(dep_coords['timmer'], dep_coords['timmer_size'])
+    print('timmer_img')
+    timmer_img = pick_region(dep_coords['timmer'], dep_coords['timmer_size'], 'dash_page', f"{DASH_PAGE_DIR}/full_screenshot.png", DASH_PAGE_DIR)
     remain_time = OCR_remain_time(timmer_img)
     if remain_time is None:
         return 2
@@ -214,16 +225,17 @@ def list_cell_detector(list_edge_img, list_OCR_img):
     raise ValueError("Error: cells is empty. Please check images.")
 
 def main_page():
-    # time.sleep(2)
-    # full_screenshot()
+    full_screenshot(DASH_PAGE_DIR)
     status = []
     for dep, coords in config['departments_coords']['main_page'].items():
+        print(dep)
         status.append((dep, department_status(coords)))
     print(status)
 
     for dep, state in status:
         if state == 0:
             click_position(config['departments_coords']['main_page'][dep]['free'])
+            
 
 def list_page_operation(department, category, target):
     time.sleep(2)
@@ -232,19 +244,39 @@ def list_page_operation(department, category, target):
     list_point = config['departments_coords']['list_point']
     x = list_point[0] + int(list_size[0] / 2)
     y_offset = list_point[1]
-    cells = match_list_items()
-    for i in cells:
-        img, y = i
-        # show_image(img)
-        text = OCR_item_name(img, 'work')
-        match, score = best_match_item(text, reference)
-        if score > 70 and match == target:
-            craft((x, y_offset + y))
+    last_top_item = None
+    
+    for _ in range(100):
+        y1 = 20
+        cells = match_list_items()
+        img, y1 = cells[0]
+        current_top_item = OCR_item_name(img, department).strip()
+        _, score = best_match_item(current_top_item, [last_top_item])
+        last_top_item = current_top_item
+        if score >= 85:
+            print(f'{department}.{category}.{target} not found')
+            keyboard.send('esc')
+            time.sleep(1)
+            return
+        
+        for i in cells:
+            img, y = i
+            # show_image(img)
+            text = OCR_item_name(img, department)
+            match, score = best_match_item(text, reference)
+            match = match.strip()
+            print(f'{text} matches: {match}, {score}')
+            if score > 70 and match == target:
+                craft((x, y_offset + y))
+                return
+        scroll_down_x4((x, y_offset + y1))
 
 def main():
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
     config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+
     
 main()
 time.sleep(2)
+# main_page()
 list_page_operation('work', 'level_5', '7.62x51mm M62')

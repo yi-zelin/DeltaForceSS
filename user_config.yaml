@@ -1,0 +1,19 @@
+# 16:9 Only!!!
+# FHD: 1920 * 1080: 1
+# QHD: 2560 * 1440: 1.33
+# UHD: 3840 * 2160: 2
+
+SCALE_FACTOR: 2
+
+tech: 
+  - guns
+  - SR-3M紧凑突击步枪
+work:
+  - level_4
+  - 6.8x51mm FMJ
+mediate:
+  - level_3
+  - 体能激活针
+armor:
+  - level_5
+  - 重型突击背心
