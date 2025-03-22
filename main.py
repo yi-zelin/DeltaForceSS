@@ -77,7 +77,6 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
             cell = list_img[prev_y:y, 0:width]
             # area = # black pixel
             area = np.sum(cell == 0)
-            print(f'{area}, {min_area}')
             if area > min_area:
                 # center y coord
                 center_y = prev_y + (y - prev_y) // 2
@@ -132,6 +131,14 @@ def OCR_is_free(image):
         return False
     return match_score > 50
 
+def OCR_item_name(image, dep):
+    OCR_config = config['OCR_configs'][dep]
+    text = pytesseract.image_to_string(image, config=OCR_config)
+    
+    # manual improvement
+    text = text.replace("番", "盔")
+    return text
+    
 
 #   0: not started
 #   1: in progress
@@ -152,7 +159,7 @@ def match_list_items():
     list_edge_img = pick_region(related_var['list_point'], related_var['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_edges.png", LIST_ITEMS_DIR)
     list_OCR_img = pick_region(related_var['list_point'], related_var['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_binary.png", LIST_ITEMS_DIR)
 
-    list_cell_detector(list_edge_img, list_OCR_img)
+    return list_cell_detector(list_edge_img, list_OCR_img)
 
 def debug_visualize_lines(image, lines, output_path):
     image_with_lines = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2RGB)
@@ -187,10 +194,8 @@ def list_cell_detector(list_edge_img, list_OCR_img):
         return cells
     raise ValueError("Error: cells is empty. Please check images.")
 
-def main():
+def main_page():
     # time.sleep(2)
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     # full_screenshot()
     status = []
     for dep, coords in config['departments_coords']['main_page'].items():
@@ -201,8 +206,18 @@ def main():
         if state == 0:
             click_position(config['departments_coords']['main_page'][dep]['free'])
 
-
-# main()
+def list_page():
+    time.sleep(2)
+    cells = match_list_items()
+    for i in cells:
+        img, y = i
+        # show_image(img)
+        print(OCR_item_name(img, 'work'))
+    
+def main():
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    
+main()
 time.sleep(2)
-config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-match_list_items()
+list_page()
