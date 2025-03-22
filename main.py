@@ -109,7 +109,7 @@ def full_screenshot(dir):
     # pyautogui.moveTo(0, 0, duration=0.3)
     screenshot = np.array(pyautogui.screenshot())
     screenshot_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-    screenshot = adjust_gamma(screenshot_bgr, gamma=0.8)
+    screenshot = adjust_gamma(screenshot_bgr, gamma=0.9)
 
     gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
     gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
@@ -208,7 +208,7 @@ def list_cell_detector(list_edge_img, list_OCR_img):
     minLength = list_size[0] * 0.8
     minArea = int(item_size[0] * item_size[1] * 0.8)
 
-    lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=10)
+    lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=20)
     debug_visualize_lines(list_edge_img, lines, LIST_ITEMS_DIR)
     if lines is None:
         raise ValueError("Error: lines is empty. Please check images.")
@@ -285,6 +285,7 @@ def list_page_operation(department, category, target):
         scroll_down_x4((x, y_offset + y1))
 
 def main():
+    beep()
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
     config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     running = True
