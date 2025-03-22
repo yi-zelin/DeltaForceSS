@@ -109,7 +109,7 @@ def full_screenshot(dir):
     # pyautogui.moveTo(0, 0, duration=0.3)
     screenshot = np.array(pyautogui.screenshot())
     screenshot_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-    screenshot = adjust_gamma(screenshot_bgr, gamma=0.9)
+     screenshot = adjust_gamma(screenshot_bgr, gamma=0.9)
 
     gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
     gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
