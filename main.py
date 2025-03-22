@@ -48,7 +48,7 @@ def click_position(position):
 def scroll_down_x4(position):
     pyautogui.moveTo(position[0], position[1], duration=0.3)
     for _ in range(4):
-        pyautogui.scroll(-1)
+        pyautogui.scroll(-120)
         pyautogui.sleep(0.1)
     time.sleep(1)
 
@@ -276,7 +276,8 @@ def list_page_operation(department, category, target):
             # show_image(img)
             text = OCR_item_name(img, department)
             match, score = best_match_item(text, reference)
-            match = match.strip()
+            if match is None:
+                continue
             print(f'{text} matches: {match}, {score}')
             if score > 70 and match == target:
                 craft((x, y_offset + y))
@@ -292,8 +293,8 @@ def main():
             running = False
             print('stop')
         if keyboard.is_pressed('f7'):
-            time.sleep(2)
             beep()
+            time.sleep(3)
             dash_page()
             beep()
         time.sleep(0.1)
