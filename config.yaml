@@ -95,7 +95,7 @@ departments:
       - ALS背负系统
 
 departments_coords:
-  main_page:
+  dash_page:
     tech_coords:
       free: [228, 770]
       free_size: [170,36]
