@@ -8,6 +8,7 @@ import yaml
 import re
 import time
 import keyboard
+import winsound
 from rapidfuzz import fuzz
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
@@ -21,6 +22,8 @@ OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
 DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
 TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+is_running = False
 
 
 # Setup
@@ -174,6 +177,9 @@ def best_match_item(str1, reference):
 
 
 # Other function
+def beep():
+    winsound.Beep(1000, 500)
+
 def department_status(dep_coords):
     '''
     0: not started
@@ -229,17 +235,22 @@ def dash_page():
     print(f'dash page: {status}')
 
     for dep, state in status:
-        if state == 1:
+        if state == 2:
             click_position(config['departments_coords']['dash_page'][dep]['free'])
             time.sleep(3)
             keyboard.send('space')
             time.sleep(1)
+            state = 0
         if state == 0:
             click_position(config['departments_coords']['dash_page'][dep]['free'])
+            time.sleep(3)
+            list_page(dep)
             
+def list_page(department):
+    category, target = user_config[department]  
+    list_page_operation(department, category, target)
 
 def list_page_operation(department, category, target):
-    time.sleep(2)
     reference = config['departments'][department][category]
     list_size = config['departments_coords']['list_size']
     list_point = config['departments_coords']['list_point']
@@ -273,11 +284,17 @@ def list_page_operation(department, category, target):
         scroll_down_x4((x, y_offset + y1))
 
 def main():
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
-    config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    running = False
+    while running:
+        if keyboard.is_pressed('f6'):
+            running = True
+            print('stop')
+        if keyboard.is_pressed('f7'):
+            time.sleep(2)
+            beep()
+            dash_page()
+            beep()
+        time.sleep(0.1)
 
-    
-main()
-time.sleep(2)
-dash_page()
-# list_page_operation('work', 'level_5', '7.62x51mm M62')
+if __name__ == "__main__":
+    main()
