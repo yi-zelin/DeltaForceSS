@@ -76,7 +76,6 @@ def pick_region(point, size, prefix='cropped', mother_file=f"{OUTPUT_DIR}/full_s
     x, y = point
     w, h = size
     cropped = screenshot[y:y+h, x:x+w]
-    print(f'{x}, {y}, {w}, {h}')
 
     cv2.imwrite(os.path.join(dir, f'{prefix}_{x}_{y}_{w}_{h}.png'), cropped)
     return cropped
@@ -173,19 +172,17 @@ def best_match_item(str1, reference):
             best_match = item
     return best_match, max_score
 
-    
-# Other op
+
+# Other function
 def department_status(dep_coords):
     '''
     0: not started
     1: in progress
     2: done
     '''
-    print('center_img')
     center_img = pick_region(dep_coords['free'], dep_coords['free_size'], 'dash_page', f"{DASH_PAGE_DIR}/full_screenshot.png", DASH_PAGE_DIR)
     if OCR_is_free(center_img):
         return 0
-    print('timmer_img')
     timmer_img = pick_region(dep_coords['timmer'], dep_coords['timmer_size'], 'dash_page', f"{DASH_PAGE_DIR}/full_screenshot.png", DASH_PAGE_DIR)
     remain_time = OCR_remain_time(timmer_img)
     if remain_time is None:
@@ -224,17 +221,21 @@ def list_cell_detector(list_edge_img, list_OCR_img):
         return cells
     raise ValueError("Error: cells is empty. Please check images.")
 
-def main_page():
+def dash_page():
     full_screenshot(DASH_PAGE_DIR)
     status = []
-    for dep, coords in config['departments_coords']['main_page'].items():
-        print(dep)
+    for dep, coords in config['departments_coords']['dash_page'].items():
         status.append((dep, department_status(coords)))
-    print(status)
+    print(f'dash page: {status}')
 
     for dep, state in status:
+        if state == 1:
+            click_position(config['departments_coords']['dash_page'][dep]['free'])
+            time.sleep(3)
+            keyboard.send('space')
+            time.sleep(1)
         if state == 0:
-            click_position(config['departments_coords']['main_page'][dep]['free'])
+            click_position(config['departments_coords']['dash_page'][dep]['free'])
             
 
 def list_page_operation(department, category, target):
@@ -278,5 +279,5 @@ def main():
     
 main()
 time.sleep(2)
-# main_page()
-list_page_operation('work', 'level_5', '7.62x51mm M62')
+dash_page()
+# list_page_operation('work', 'level_5', '7.62x51mm M62')
