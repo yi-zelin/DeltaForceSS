@@ -284,10 +284,12 @@ def list_page_operation(department, category, target):
         scroll_down_x4((x, y_offset + y1))
 
 def main():
-    running = False
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+    config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    running = True
     while running:
         if keyboard.is_pressed('f6'):
-            running = True
+            running = False
             print('stop')
         if keyboard.is_pressed('f7'):
             time.sleep(2)
