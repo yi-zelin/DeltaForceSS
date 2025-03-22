@@ -7,7 +7,8 @@ import pyautogui
 import yaml
 import re
 import time
-from thefuzz import fuzz
+import keyboard
+from rapidfuzz import fuzz
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
@@ -103,10 +104,10 @@ def scroll_down_x4(position):
         pyautogui.scroll(-1)
         pyautogui.sleep(0.1)
 
-def best_match_item(str1, department):
+def best_match_item(str1, reference):
     max_score = 0
     best_match = None
-    for item in department:
+    for item in reference:
         score = fuzz.partial_ratio(str1, item)
         # print(f'{item}: {score}')
         if score > max_score:
@@ -206,18 +207,34 @@ def main_page():
         if state == 0:
             click_position(config['departments_coords']['main_page'][dep]['free'])
 
-def list_page():
+def list_page_operation(department, category, target):
     time.sleep(2)
+    reference = config['departments'][department][category]
+    list_size = config['departments_coords']['list_size']
+    list_point = config['departments_coords']['list_point']
+    x = list_point[0] + int(list_size[0] / 2)
+    y_offset = list_point[1]
     cells = match_list_items()
     for i in cells:
         img, y = i
         # show_image(img)
-        print(OCR_item_name(img, 'work'))
-    
+        text = OCR_item_name(img, 'work')
+        match, score = best_match_item(text, reference)
+        if score > 70 and match == target:
+            craft((x, y_offset + y))
+
+def craft(coordination):
+    build_position = config['departments_coords']['build_position']
+    click_position(coordination)
+    time.sleep(3)
+    click_position(build_position)
+    time.sleep(3)
+    keyboard.send('esc')
+        
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     
 main()
 time.sleep(2)
-list_page()
+list_page_operation('work', 'level_5', '7.62x51mm M62')

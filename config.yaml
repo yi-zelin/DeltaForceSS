@@ -125,8 +125,8 @@ departments_coords:
   list_size: [368, 816]
   item_size: [368, 84]
 
-  build_pixel: [1682, 950]
-  buy_pixel: [866, 873]
+  build_position: [1682, 950]
+  buy_position: [866, 873]
 
   h_row_with_margin: 102
 
