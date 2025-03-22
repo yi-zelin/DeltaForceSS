@@ -128,8 +128,6 @@ departments_coords:
   build_position: [1682, 950]
   buy_position: [866, 873]
 
-  h_row_with_margin: 102
-
 OCR_configs:
   tech: --psm 7 -l chi_sim
   work: --psm 7 -l chi_sim -c tessedit_char_whitelist= 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz双头弹独箭形号霰射鼠
