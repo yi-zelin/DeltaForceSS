@@ -17,6 +17,8 @@ SCALE_FACTOR = 2
 OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
 
+
+# Setup
 def setup_output_directory(output_dir):
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -29,27 +31,32 @@ def scale_coords(coords):
         return {k: scale_coords(v) for k, v in coords.items()}
     return coords
 
+
+# Mouse
+def click_position(position):
+    pyautogui.moveTo(position[0], position[1], duration=0.1)
+    pyautogui.click()
+
+def scroll_down_x4(position):
+    pyautogui.moveTo(position[0], position[1], duration=0.1)
+    for _ in range(4):
+        pyautogui.scroll(-1)
+        pyautogui.sleep(0.1)
+
+def craft(coordination):
+    build_position = config['departments_coords']['build_position']
+    click_position(coordination)
+    time.sleep(3)
+    click_position(build_position)
+    time.sleep(3)
+    keyboard.send('esc')
+
+
+# Image
 def adjust_gamma(image, gamma=1.0):
     inv_gamma = 1.0 / gamma
     table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
     return cv2.LUT(image, table)
-
-# always clear dir
-def full_screenshot(dir=OUTPUT_DIR):
-    screenshot = np.array(pyautogui.screenshot())
-    screenshot_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-    screenshot = adjust_gamma(screenshot_bgr, gamma=0.8)
-
-    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
-    gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
-    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-    edges = cv2.Canny(gray, 50, 150)
-
-    setup_output_directory(dir)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot.png'), screenshot)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot_gray.png'), gray)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot_binary.png'), binary)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot_edges.png'), edges)
 
 def pick_region(point, size, prefix='cropped', mother_file=f"{OUTPUT_DIR}/full_screenshot.png", dir=OUTPUT_DIR):
     if not os.path.exists(mother_file):
@@ -86,35 +93,41 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
             prev_y = y
     return cells
 
+
+# Screenshot
+def full_screenshot(dir=OUTPUT_DIR):
+    screenshot = np.array(pyautogui.screenshot())
+    screenshot_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+    screenshot = adjust_gamma(screenshot_bgr, gamma=0.8)
+
+    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+    gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
+    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    edges = cv2.Canny(gray, 50, 150)
+
+    setup_output_directory(dir)
+    cv2.imwrite(os.path.join(dir, 'full_screenshot.png'), screenshot)
+    cv2.imwrite(os.path.join(dir, 'full_screenshot_gray.png'), gray)
+    cv2.imwrite(os.path.join(dir, 'full_screenshot_binary.png'), binary)
+    cv2.imwrite(os.path.join(dir, 'full_screenshot_edges.png'), edges)
+
+
+# Debug
 def show_image(image):
     cv2.imshow('image', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def click_position(position):
-    pyautogui.moveTo(position[0], position[1], duration=0.1)
-    pyautogui.click()
+def debug_visualize_lines(image, lines, output_path):
+    image_with_lines = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2RGB)
 
-def get_names_form_list(image):
-    return;
-
-def scroll_down_x4(position):
-    pyautogui.moveTo(position[0], position[1], duration=0.1)
-    for _ in range(4):
-        pyautogui.scroll(-1)
-        pyautogui.sleep(0.1)
-
-def best_match_item(str1, reference):
-    max_score = 0
-    best_match = None
-    for item in reference:
-        score = fuzz.partial_ratio(str1, item)
-        # print(f'{item}: {score}')
-        if score > max_score:
-            max_score = score
-            best_match = item
-    return best_match, max_score
-
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        cv2.line(image_with_lines, (x1, y1), (x2, y2), (0, 255, 0), 1) # green line thickness = 1 px
+    cv2.imwrite(os.path.join(LIST_ITEMS_DIR, f'debug_lines.png'), image_with_lines)
+    
+    
+# OCR
 def OCR_remain_time(image):
     t_config = r'--psm 7 -c tessedit_char_whitelist=0123456789:'
     text = pytesseract.image_to_string(image, config=t_config)
@@ -139,12 +152,26 @@ def OCR_item_name(image, dep):
     # manual improvement
     text = text.replace("番", "盔")
     return text
-    
 
-#   0: not started
-#   1: in progress
-#   2: done
+def best_match_item(str1, reference):
+    max_score = 0
+    best_match = None
+    for item in reference:
+        score = fuzz.partial_ratio(str1, item)
+        # print(f'{item}: {score}')
+        if score > max_score:
+            max_score = score
+            best_match = item
+    return best_match, max_score
+
+    
+# Other op
 def department_status(dep_coords):
+    '''
+    0: not started
+    1: in progress
+    2: done
+    '''
     center_img = pick_region(dep_coords['free'], dep_coords['free_size'])
     if OCR_is_free(center_img):
         return 0
@@ -159,16 +186,7 @@ def match_list_items():
     full_screenshot(LIST_ITEMS_DIR)
     list_edge_img = pick_region(related_var['list_point'], related_var['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_edges.png", LIST_ITEMS_DIR)
     list_OCR_img = pick_region(related_var['list_point'], related_var['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_binary.png", LIST_ITEMS_DIR)
-
     return list_cell_detector(list_edge_img, list_OCR_img)
-
-def debug_visualize_lines(image, lines, output_path):
-    image_with_lines = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2RGB)
-
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        cv2.line(image_with_lines, (x1, y1), (x2, y2), (0, 255, 0), 1) # green line thickness = 1 px
-    cv2.imwrite(os.path.join(LIST_ITEMS_DIR, f'debug_lines.png'), image_with_lines)
 
 def list_cell_detector(list_edge_img, list_OCR_img):
     list_size = config['departments_coords']['list_size']
@@ -223,14 +241,6 @@ def list_page_operation(department, category, target):
         if score > 70 and match == target:
             craft((x, y_offset + y))
 
-def craft(coordination):
-    build_position = config['departments_coords']['build_position']
-    click_position(coordination)
-    time.sleep(3)
-    click_position(build_position)
-    time.sleep(3)
-    keyboard.send('esc')
-        
 def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
