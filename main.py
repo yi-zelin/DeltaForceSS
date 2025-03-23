@@ -115,7 +115,7 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 def full_screenshot(output_dir):
     # pyautogui.moveTo(0, 0, duration=0.3)
     screenshot = np.array(pyautogui.screenshot())
-    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
     img = adjust_gamma(img_bgr, gamma=0.9)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -378,6 +378,8 @@ def list_page_operation(department, category, target):
         scroll_down_x4((x, y_offset + y1))
 
 def main():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     while True:
         beep()
         time.sleep(5)
