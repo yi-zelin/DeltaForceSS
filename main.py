@@ -9,8 +9,10 @@ import re
 import time
 import keyboard
 import winsound
-import mss
-import mss.tools
+import win32ui
+import win32con
+import win32gui
+from PIL import Image
 from rapidfuzz import fuzz
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
@@ -116,44 +118,75 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 # Screenshot
 def full_screenshot(output_dir):
-    with mss.mss() as sct:
-        monitor = sct.monitors[MAIN_MONITOR]
-        screenshot = sct.grab(monitor)
+    hwnd = win32gui.GetDesktopWindow()
+    hwndDC = win32gui.GetWindowDC(hwnd)
+    mfcDC = win32ui.CreateDCFromHandle(hwndDC)
+    saveDC = mfcDC.CreateCompatibleDC()
 
-        img = np.array(screenshot)
-        img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
-        # img = adjust_gamma(img, gamma=0.9)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
-        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-        edges = cv2.Canny(gray, 50, 150)
-        
-        cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), img)
-        cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
-        cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
-        cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
+    left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    width = right - left
+    height = bottom - top
+
+    saveBitMap = win32ui.CreateBitmap()
+    saveBitMap.CreateCompatibleBitmap(mfcDC, width, height)
+    saveDC.SelectObject(saveBitMap)
+
+    saveDC.BitBlt((0, 0), (width, height), mfcDC, (0, 0), win32con.SRCCOPY)
+
+    bmpinfo = saveBitMap.GetInfo()
+    bmpstr = saveBitMap.GetBitmapBits(True)
+    img = np.frombuffer(bmpstr, dtype=np.uint8).reshape((bmpinfo["bmHeight"], bmpinfo["bmWidth"], 4))
+    img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
+    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    edges = cv2.Canny(gray, 50, 150)
+
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), img)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
+
+    # release
+    win32gui.DeleteObject(saveBitMap.GetHandle())
+    saveDC.DeleteDC()
+    mfcDC.DeleteDC()
+    win32gui.ReleaseDC(hwnd, hwndDC)
 
 def screenshot(x, y, w, h, output_dir):
-    with mss.mss() as sct:
-        main_monitor = sct.monitors[MAIN_MONITOR]
-        monitor = {"top": y + main_monitor['top'], 
-                   "left": x + main_monitor['left'], 
-                   "width": w, "height": h}
-        screenshot = sct.grab(monitor)
+    hwnd = win32gui.GetDesktopWindow()
+    hwndDC = win32gui.GetWindowDC(hwnd)
+    mfcDC = win32ui.CreateDCFromHandle(hwndDC)
+    saveDC = mfcDC.CreateCompatibleDC()
 
-        img = np.array(screenshot)
-        img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-        red_channel = img[:, :, 2]
-        _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-        combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
+    saveBitMap = win32ui.CreateBitmap()
+    saveBitMap.CreateCompatibleBitmap(mfcDC, w, h)
+    saveDC.SelectObject(saveBitMap)
 
-        cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
-        cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
-        cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
+    saveDC.BitBlt((0, 0), (w, h), mfcDC, (x, y), win32con.SRCCOPY)
 
-        return gray_binary, combined_binary
+    bmpinfo = saveBitMap.GetInfo()
+    bmpstr = saveBitMap.GetBitmapBits(True)
+    img = np.frombuffer(bmpstr, dtype=np.uint8).reshape((bmpinfo["bmHeight"], bmpinfo["bmWidth"], 4))
+    img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    red_channel = img[:, :, 2]
+    _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+    combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
+
+    cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
+    cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
+    cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
+
+    win32gui.DeleteObject(saveBitMap.GetHandle())
+    saveDC.DeleteDC()
+    mfcDC.DeleteDC()
+    win32gui.ReleaseDC(hwnd, hwndDC)
+
+    return gray_binary, combined_binary
     
 # Debug
 def show_image(image):
