@@ -138,7 +138,7 @@ def screenshot(x, y, w, h, output_dir):
     red_channel = img[:, :, 2]
     _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
     combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
-    show_image(combined_binary)
+    
     cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
     cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
     cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
@@ -372,7 +372,7 @@ def list_page_operation(department, category, target):
             if match is None:
                 continue
             print(f'{text} matches: {match}, {score}')
-            if score > 70 and match == target:
+            if score > 95 and match == target:
                 craft((x, y_offset + y))
                 return
         scroll_down_x4((x, y_offset + y1))
@@ -382,7 +382,7 @@ def main():
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     while True:
         beep()
-        time.sleep(5)
+        time.sleep(6)
         dash_page()
         print('🎉 Finished!')
         beep()
