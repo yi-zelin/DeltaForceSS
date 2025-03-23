@@ -12,7 +12,6 @@ PyRect==0.2.0
 PyScreeze==1.0.1
 pytesseract==0.3.13
 pytweening==1.2.0
-pywin32==310
 PyYAML==6.0.2
 RapidFuzz==3.12.2
 thefuzz==0.22.1

@@ -9,11 +9,8 @@ import re
 import time
 import keyboard
 import winsound
-import win32ui
-import win32con
-import win32gui
-from PIL import Image
 from rapidfuzz import fuzz
+from datetime import datetime
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
@@ -22,7 +19,6 @@ with open('user_config.yaml', 'r', encoding='utf-8') as fin:
     user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
 SCALE_FACTOR = user_config['SCALE_FACTOR']
-MAIN_MONITOR = user_config['MAIN_MONITOR']
 OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
 DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
@@ -118,74 +114,39 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 # Screenshot
 def full_screenshot(output_dir):
-    hwnd = win32gui.GetDesktopWindow()
-    hwndDC = win32gui.GetWindowDC(hwnd)
-    mfcDC = win32ui.CreateDCFromHandle(hwndDC)
-    saveDC = mfcDC.CreateCompatibleDC()
-
-    left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-    width = right - left
-    height = bottom - top
-
-    saveBitMap = win32ui.CreateBitmap()
-    saveBitMap.CreateCompatibleBitmap(mfcDC, width, height)
-    saveDC.SelectObject(saveBitMap)
-
-    saveDC.BitBlt((0, 0), (width, height), mfcDC, (0, 0), win32con.SRCCOPY)
-
-    bmpinfo = saveBitMap.GetInfo()
-    bmpstr = saveBitMap.GetBitmapBits(True)
-    img = np.frombuffer(bmpstr, dtype=np.uint8).reshape((bmpinfo["bmHeight"], bmpinfo["bmWidth"], 4))
-    img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+    # pyautogui.moveTo(0, 0, duration=0.3)
+    screenshot = np.array(pyautogui.screenshot())
+    img_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+    img = adjust_gamma(img_bgr, gamma=0.9)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
     _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
     edges = cv2.Canny(gray, 50, 150)
 
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), img)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), screenshot)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
-
-    # release
-    win32gui.DeleteObject(saveBitMap.GetHandle())
-    saveDC.DeleteDC()
-    mfcDC.DeleteDC()
-    win32gui.ReleaseDC(hwnd, hwndDC)
+    
 
 def screenshot(x, y, w, h, output_dir):
-    hwnd = win32gui.GetDesktopWindow()
-    hwndDC = win32gui.GetWindowDC(hwnd)
-    mfcDC = win32ui.CreateDCFromHandle(hwndDC)
-    saveDC = mfcDC.CreateCompatibleDC()
-
-    saveBitMap = win32ui.CreateBitmap()
-    saveBitMap.CreateCompatibleBitmap(mfcDC, w, h)
-    saveDC.SelectObject(saveBitMap)
-
-    saveDC.BitBlt((0, 0), (w, h), mfcDC, (x, y), win32con.SRCCOPY)
-
-    bmpinfo = saveBitMap.GetInfo()
-    bmpstr = saveBitMap.GetBitmapBits(True)
-    img = np.frombuffer(bmpstr, dtype=np.uint8).reshape((bmpinfo["bmHeight"], bmpinfo["bmWidth"], 4))
-    img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-
+    img = pyautogui.screenshot(region=(x, y, w, h))
+    img = np.array(img)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
     red_channel = img[:, :, 2]
     _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
     combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
-
-    cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
-    cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
-    cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
-
-    win32gui.DeleteObject(saveBitMap.GetHandle())
-    saveDC.DeleteDC()
-    mfcDC.DeleteDC()
-    win32gui.ReleaseDC(hwnd, hwndDC)
-
+    
+    timestamp = datetime.now().strftime("%H%M%S")
+    
+    # Save the images with the timestamp in the filename
+    cv2.imwrite(os.path.join(output_dir, f'screenshot_red_binary_{timestamp}.png'), red_binary)
+    cv2.imwrite(os.path.join(output_dir, f'screenshot_combined_binary_{timestamp}.png'), combined_binary)
+    cv2.imwrite(os.path.join(output_dir, f'screenshot_gray_binary_{timestamp}.png'), gray_binary)
+    
     return gray_binary, combined_binary
     
 # Debug
