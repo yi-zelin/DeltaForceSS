@@ -21,10 +21,11 @@ SCALE_FACTOR = user_config['SCALE_FACTOR']
 OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
 DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
+BUY_DIR = f'{OUTPUT_DIR}/buy'
 TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-is_running = False
-
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+departments_coords = None
 
 # Setup
 def setup_output_directory(output_dir):
@@ -34,10 +35,14 @@ def setup_output_directory(output_dir):
 
 def scale_coords(coords):
     if isinstance(coords, (list, tuple)):
-        return [int(x * SCALE_FACTOR) for x in coords]
+        if all(isinstance(item, (list, tuple)) for item in coords):
+            return [scale_coords(item) for item in coords]
+        else:
+            return [int(x * SCALE_FACTOR) for x in coords]
     elif isinstance(coords, dict):
         return {k: scale_coords(v) for k, v in coords.items()}
-    return coords
+    else:
+        return coords
 
 
 # Mouse
@@ -53,11 +58,13 @@ def scroll_down_x4(position):
     time.sleep(1)
 
 def craft(coordination):
-    build_position = config['departments_coords']['build_position']
+    build_position = departments_coords['build_position']
     click_position(coordination)
     time.sleep(1)
-    click_position(build_position)
-    time.sleep(3)
+    has_all_materials = initalize_preparation()
+    if has_all_materials:
+        click_position(build_position)
+        time.sleep(3)
     keyboard.send('esc')
     time.sleep(1)
 
@@ -116,25 +123,27 @@ def full_screenshot(output_dir):
     _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
     edges = cv2.Canny(gray, 50, 150)
 
-    setup_output_directory(output_dir)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), screenshot)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
     cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
     
 
-def screenshot(output_dir, x, y, w, h):
-    screenshot = pyautogui.screenshot(region=(x, y, x + w, y + h))
-    # Split color channels
-    blue_channel = screenshot[:, :, 0]  # Blue channel
-    green_channel = screenshot[:, :, 1]  # Green channel
-    red_channel = screenshot[:, :, 2]  # Red channel
+def screenshot(x, y, w, h, output_dir):
+    img = pyautogui.screenshot(region=(x, y, w, h))
+    img = np.array(img)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    red_channel = img[:, :, 2]
+    _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+    combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
+    show_image(combined_binary)
+    cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
+    cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
+    cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
     
-    cv2.imwrite(os.path.join(output_dir, 'blue_channel.png'), blue_channel)
-    cv2.imwrite(os.path.join(output_dir, 'green_channel.png'), green_channel)
-    cv2.imwrite(os.path.join(output_dir, 'red_channel.png'), red_channel)
-    
-    return blue_channel, green_channel, red_channel
+    return gray_binary, combined_binary
     
 # Debug
 def show_image(image):
@@ -180,8 +189,11 @@ def OCR_item_name(image, dep):
 def OCR_price(image):
     t_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789,"'
     text = pytesseract.image_to_string(image, config=t_config)
-    price = int(re.sub(r'[^\d]', '', text))
-    return price
+    price = re.sub(r'[^\d]', '', text)
+    if price == '':
+        return None    
+    print(f'🪙 OCR price: {price} 🪙')
+    return int(price)
     
 
 def best_match_item(str1, reference):
@@ -201,33 +213,64 @@ def beep():
     winsound.Beep(1000, 500)
     
 def buy_material():
-    x, y = config['departments_coords']['buy_position']
-    click_position(config['departments_coords']['price_position'])
-    time.sleep(3)
-    
-    x, y = config['departments_coords']['price_point']
-    w, h = config['departments_coords']['price_size']
+    x, y = departments_coords['price_point']
+    w, h = departments_coords['price_size']
     price = None
     
     trial = 11
     for i in range(trial):
-        image = screenshot(LIST_ITEMS_DIR, x, y, w, h)
+        _, image = screenshot(x, y, w, h, BUY_DIR)
         price = OCR_price(image)
-        
         if price is not None:
             if i == trial - 1:
                 keyboard.send('esc')
                 time.sleep(1)
                 return -1
-            click_position(config['departments_coords']['price_position'])
+            # cleck price to buy
+            click_position(departments_coords['price_position'])
             time.sleep(3)
         else:
             return price
     return -1
+
+def find_buy_state():
+    '''
+    -1: not exist buy icon
+    0:  three materials
+    1:  four materials
+    '''
+    buy_points = departments_coords['buy_points']
+    w, h = departments_coords['buy_size']
+    for index, value in enumerate(buy_points):
+        x, y = value
+        binary_img, _ = screenshot(x, y, w, h, BUY_DIR)
+        white_pix = cv2.countNonZero(binary_img)
+        if white_pix >= w * h * 0.05:
+            return index
+    return -1
+
+# def exist_buy(x, y, w, h, threshold = 0.1):
+#     binary_img, _ = screenshot(x, y, x+w, y+h, BUY_DIR)
+#     white_pix = cv2.countNonZero(binary_img)
+#     return white_pix >= w * h * threshold
         
 def initalize_preparation():
-    return 1
+    setup_output_directory(BUY_DIR)
+    buy_state = find_buy_state()
+    if buy_state == -1:
+        return True
     
+    # go to buy page
+    click_position(departments_coords['buy_positions'][buy_state])
+    time.sleep(3)
+    failed = buy_material() == -1
+    if failed:
+        print(f'⚠️ Failed to buy material: maximum retry attempts reached ⚠️')
+        
+    buy_state = find_buy_state()
+    if buy_state != -1:
+        print(f'⚠️ There is trade in only item ⚠️')
+    return buy_state == -1
 
 def department_status(dep_coords):
     '''
@@ -245,15 +288,15 @@ def department_status(dep_coords):
     return 1
 
 def match_list_items():
-    related_var = config['departments_coords']
+    setup_output_directory(LIST_ITEMS_DIR)
     full_screenshot(LIST_ITEMS_DIR)
-    list_edge_img = pick_region(related_var['list_point'], related_var['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_edges.png", LIST_ITEMS_DIR)
-    list_OCR_img = pick_region(related_var['list_point'], related_var['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_binary.png", LIST_ITEMS_DIR)
+    list_edge_img = pick_region(departments_coords['list_point'], departments_coords['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_edges.png", LIST_ITEMS_DIR)
+    list_OCR_img = pick_region(departments_coords['list_point'], departments_coords['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_binary.png", LIST_ITEMS_DIR)
     return list_cell_detector(list_edge_img, list_OCR_img)
 
 def list_cell_detector(list_edge_img, list_OCR_img):
-    list_size = config['departments_coords']['list_size']
-    item_size = config['departments_coords']['item_size']
+    list_size = departments_coords['list_size']
+    item_size = departments_coords['item_size']
     minLength = list_size[0] * 0.8
     minArea = int(item_size[0] * item_size[1] * 0.8)
 
@@ -277,21 +320,22 @@ def list_cell_detector(list_edge_img, list_OCR_img):
     raise ValueError("Error: cells is empty. Please check images.")
 
 def dash_page():
+    setup_output_directory(DASH_PAGE_DIR)
     full_screenshot(DASH_PAGE_DIR)
     status = []
-    for dep, coords in config['departments_coords']['dash_page'].items():
+    for dep, coords in departments_coords['dash_page'].items():
         status.append((dep, department_status(coords)))
     print(f'dash page: {status}')
 
     for dep, state in status:
         if state == 2:
-            click_position(config['departments_coords']['dash_page'][dep]['free'])
+            click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             keyboard.send('space')
             time.sleep(1)
             state = 0
         if state == 0:
-            click_position(config['departments_coords']['dash_page'][dep]['free'])
+            click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
             
@@ -301,8 +345,8 @@ def list_page(department):
 
 def list_page_operation(department, category, target):
     reference = config['departments'][department][category]
-    list_size = config['departments_coords']['list_size']
-    list_point = config['departments_coords']['list_point']
+    list_size = departments_coords['list_size']
+    list_point = departments_coords['list_point']
     x = list_point[0] + int(list_size[0] / 2)
     y_offset = list_point[1]
     last_top_item = None
@@ -334,22 +378,14 @@ def list_page_operation(department, category, target):
         scroll_down_x4((x, y_offset + y1))
 
 def main():
-    beep()
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
-    config['departments_coords'] = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    running = True
-    while running:
-        if keyboard.is_pressed('f6'):
-            running = False
-            print('stop')
-        if keyboard.is_pressed('f7'):
-            beep()
-            time.sleep(3)
-            dash_page()
-            beep()
-        time.sleep(0.1)
+    while True:
+        beep()
+        time.sleep(5)
+        dash_page()
+        print('🎉 Finished!')
+        beep()
+        time.sleep(600)
 
 if __name__ == "__main__":
-    # main()
-    time.sleep(2)
-    buy_material()
+    main()
+    

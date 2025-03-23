@@ -127,8 +127,16 @@ departments_coords:
   price_point: [834, 734]
   price_size: [250, 38]
 
+  buy_points:
+    - [846, 856]
+    - [886, 856]
+  buy_size: [36, 36]
+
+
   build_position: [1682, 950]
-  buy_position: [866, 874]
+  buy_positions: 
+    - [866, 874]
+    - [906, 874]
   price_position: [964, 750]
 
 OCR_configs:
