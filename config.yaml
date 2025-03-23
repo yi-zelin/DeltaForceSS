@@ -124,9 +124,12 @@ departments_coords:
   list_point: [182, 162]
   list_size: [368, 816]
   item_size: [368, 84]
+  price_point: [834, 734]
+  price_size: [250, 38]
 
   build_position: [1682, 950]
-  buy_position: [866, 873]
+  buy_position: [866, 874]
+  price_position: [964, 750]
 
 OCR_configs:
   tech: --psm 7 -l chi_sim
