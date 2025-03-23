@@ -105,24 +105,37 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 
 # Screenshot
-def full_screenshot(dir):
+def full_screenshot(output_dir):
     # pyautogui.moveTo(0, 0, duration=0.3)
     screenshot = np.array(pyautogui.screenshot())
-    screenshot_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-     screenshot = adjust_gamma(screenshot_bgr, gamma=0.9)
+    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img = adjust_gamma(img_bgr, gamma=0.9)
 
-    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
     _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
     edges = cv2.Canny(gray, 50, 150)
 
-    setup_output_directory(dir)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot.png'), screenshot)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot_gray.png'), gray)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot_binary.png'), binary)
-    cv2.imwrite(os.path.join(dir, 'full_screenshot_edges.png'), edges)
+    setup_output_directory(output_dir)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), screenshot)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
+    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
+    
 
-
+def screenshot(output_dir, x, y, w, h):
+    screenshot = pyautogui.screenshot(region=(x, y, x + w, y + h))
+    # Split color channels
+    blue_channel = screenshot[:, :, 0]  # Blue channel
+    green_channel = screenshot[:, :, 1]  # Green channel
+    red_channel = screenshot[:, :, 2]  # Red channel
+    
+    cv2.imwrite(os.path.join(output_dir, 'blue_channel.png'), blue_channel)
+    cv2.imwrite(os.path.join(output_dir, 'green_channel.png'), green_channel)
+    cv2.imwrite(os.path.join(output_dir, 'red_channel.png'), red_channel)
+    
+    return blue_channel, green_channel, red_channel
+    
 # Debug
 def show_image(image):
     cv2.imshow('image', image)
@@ -164,6 +177,13 @@ def OCR_item_name(image, dep):
     text = text.replace("番", "盔")
     return text
 
+def OCR_price(image):
+    t_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789,"'
+    text = pytesseract.image_to_string(image, config=t_config)
+    price = int(re.sub(r'[^\d]', '', text))
+    return price
+    
+
 def best_match_item(str1, reference):
     max_score = 0
     best_match = None
@@ -179,6 +199,35 @@ def best_match_item(str1, reference):
 # Other function
 def beep():
     winsound.Beep(1000, 500)
+    
+def buy_material():
+    x, y = config['departments_coords']['buy_position']
+    click_position(config['departments_coords']['price_position'])
+    time.sleep(3)
+    
+    x, y = config['departments_coords']['price_point']
+    w, h = config['departments_coords']['price_size']
+    price = None
+    
+    trial = 11
+    for i in range(trial):
+        image = screenshot(LIST_ITEMS_DIR, x, y, w, h)
+        price = OCR_price(image)
+        
+        if price is not None:
+            if i == trial - 1:
+                keyboard.send('esc')
+                time.sleep(1)
+                return -1
+            click_position(config['departments_coords']['price_position'])
+            time.sleep(3)
+        else:
+            return price
+    return -1
+        
+def initalize_preparation():
+    return 1
+    
 
 def department_status(dep_coords):
     '''
@@ -301,4 +350,6 @@ def main():
         time.sleep(0.1)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    time.sleep(2)
+    buy_material()
