@@ -9,6 +9,8 @@ import re
 import time
 import keyboard
 import winsound
+import mss
+import mss.tools
 from rapidfuzz import fuzz
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
@@ -18,6 +20,7 @@ with open('user_config.yaml', 'r', encoding='utf-8') as fin:
     user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
 SCALE_FACTOR = user_config['SCALE_FACTOR']
+MAIN_MONITOR = user_config['MAIN_MONITOR']
 OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
 DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
@@ -113,37 +116,44 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 # Screenshot
 def full_screenshot(output_dir):
-    # pyautogui.moveTo(0, 0, duration=0.3)
-    screenshot = np.array(pyautogui.screenshot())
-    img_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-    img = adjust_gamma(img_bgr, gamma=0.9)
+    with mss.mss() as sct:
+        monitor = sct.monitors[MAIN_MONITOR]
+        screenshot = sct.grab(monitor)
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
-    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-    edges = cv2.Canny(gray, 50, 150)
-
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), screenshot)
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
-    
+        img = np.array(screenshot)
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+        # img = adjust_gamma(img, gamma=0.9)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
+        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+        edges = cv2.Canny(gray, 50, 150)
+        
+        cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), img)
+        cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
+        cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
+        cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
 
 def screenshot(x, y, w, h, output_dir):
-    img = pyautogui.screenshot(region=(x, y, w, h))
-    img = np.array(img)
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-    red_channel = img[:, :, 2]
-    _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-    combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
-    
-    cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
-    cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
-    cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
-    
-    return gray_binary, combined_binary
+    with mss.mss() as sct:
+        main_monitor = sct.monitors[MAIN_MONITOR]
+        monitor = {"top": y + main_monitor['top'], 
+                   "left": x + main_monitor['left'], 
+                   "width": w, "height": h}
+        screenshot = sct.grab(monitor)
+
+        img = np.array(screenshot)
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+        red_channel = img[:, :, 2]
+        _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+        combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
+
+        cv2.imwrite(os.path.join(output_dir, 'screenshot_red_binary.png'), red_binary)
+        cv2.imwrite(os.path.join(output_dir, 'screenshot_combined_binary.png'), combined_binary)
+        cv2.imwrite(os.path.join(output_dir, 'screenshot_gray_binary.png'), gray_binary)
+
+        return gray_binary, combined_binary
     
 # Debug
 def show_image(image):
@@ -332,8 +342,8 @@ def dash_page():
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             keyboard.send('space')
-            time.sleep(1)
-            state = 0
+            time.sleep(3)
+            state = 0  
         if state == 0:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)

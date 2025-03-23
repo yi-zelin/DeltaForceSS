@@ -16,16 +16,17 @@
 > * 不要同时开录屏 可能会截不上图
 
 # Mar 20, 2025
-使用虚拟环境! python 3.9.21 (不用也行 /doge)
+使用虚拟环境! python 版本 3.9.21 (不用也行 /doge)
 
 ### Tesseract
 [安装 Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
 
-install for anyone using this computer
+选择 install for anyone using this computer
 
 ![alt text](.img/image.png)
 
 使用默认安装位置 ("C:\Program Files\Tesseract-OCR")
 
 ### requirements
+运行以安装所有需要的库:
 `pip install -r requirements.txt`
