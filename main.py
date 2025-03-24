@@ -9,6 +9,7 @@ import re
 import time
 import keyboard
 import winsound
+import win32gui, win32ui, win32con
 from rapidfuzz import fuzz
 from datetime import datetime
 
@@ -19,6 +20,7 @@ with open('user_config.yaml', 'r', encoding='utf-8') as fin:
     user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
 SCALE_FACTOR = user_config['SCALE_FACTOR']
+MAIN_MONITOR = user_config['MAIN_MONITOR']
 OUTPUT_DIR = './log'
 LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
 DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
@@ -71,27 +73,15 @@ def craft(coordination):
 
 
 # Image
-def adjust_gamma(image, gamma=1.0):
-    inv_gamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-    return cv2.LUT(image, table)
-
-def pick_region(point, size, prefix='cropped', mother_file=f"{OUTPUT_DIR}/full_screenshot.png", dir=OUTPUT_DIR):
-    if not os.path.exists(mother_file):
-        raise FileNotFoundError(f"File not found: {mother_file}")
-
-    screenshot = cv2.imread(mother_file, cv2.COLOR_BGR2GRAY)
-    if screenshot is None:
-        raise ValueError("Failed to read screenshot!")
-
-    x, y = point
-    w, h = size
-    cropped = screenshot[y:y+h, x:x+w]
-
-    cv2.imwrite(os.path.join(dir, f'{prefix}_{x}_{y}_{w}_{h}.png'), cropped)
-    return cropped
+# def adjust_gamma(image, gamma=1.0):
+#     inv_gamma = 1.0 / gamma
+#     table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+#     return cv2.LUT(image, table)
 
 def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
+    '''
+    return list of (image, y position) array
+    '''
     cells = []
     height, width = list_img.shape
     horizontal_lines.append(height)
@@ -113,51 +103,33 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 
 # Screenshot
-def full_screenshot(output_dir, threshold=0.005, max_attempts=10):
-    attempt = 0
-    while attempt < max_attempts:
-        # Capture the full screenshot
-        screenshot = np.array(pyautogui.screenshot())
-        img_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-        img = adjust_gamma(img_bgr, gamma=0.9)
-
-        # Convert to grayscale and apply binary thresholding
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
-        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-
-        # Calculate the percentage of white pixels
-        white_pixels = np.sum(binary == 255)
-        total_pixels = binary.size
-        white_ratio = white_pixels / total_pixels
-
-        # If white pixels are more than 1% of the total area, save and return
-        if white_ratio > threshold:
-            edges = cv2.Canny(gray, 50, 150)
-
-            # Save the images with the timestamp in the filename
-            cv2.imwrite(os.path.join(output_dir, f'full_screenshot.png'), img)
-            cv2.imwrite(os.path.join(output_dir, f'full_screenshot_gray.png'), gray)
-            cv2.imwrite(os.path.join(output_dir, f'full_screenshot_binary.png'), binary)
-            cv2.imwrite(os.path.join(output_dir, f'full_screenshot_edges.png'), edges)
-
-            return img, gray, binary, edges
-        
-        # If white pixels are less than or equal to 1%, retry
-        attempt += 1
-        print(f"full screenshot attempt {attempt}: White area is {white_ratio * 100:.2f}% (less than 1%), retrying...")
-    
-    # If max attempts reached, return None
-    print("Max attempts reached. No valid screenshot captured.")
-    return None, None, None, None
+def capture_screenshot_win32(x, y, w, h):
+    hdesktop = win32gui.GetDesktopWindow()
+    hwnd = win32gui.GetWindow(hdesktop, win32con.GW_CHILD)
+    hdc = win32gui.GetWindowDC(hwnd)
+    cdc = win32ui.CreateDCFromHandle(hdc)
+    mdc = cdc.CreateCompatibleDC()
+    bmp = win32ui.CreateBitmap()
+    bmp.CreateCompatibleBitmap(cdc, w, h)
+    mdc.SelectObject(bmp)
+    mdc.BitBlt((0, 0), (w, h), cdc, (x, y), win32con.SRCCOPY)
+    bmpinfo = bmp.GetInfo()
+    bmpstr = bmp.GetBitmapBits(True)
+    img = np.frombuffer(bmpstr, dtype='uint8').reshape((bmpinfo['bmHeight'], bmpinfo['bmWidth'], 4))
+    win32gui.DeleteObject(bmp.GetHandle())
+    mdc.DeleteDC()
+    cdc.DeleteDC()
+    win32gui.ReleaseDC(hwnd, hdc)
+    return img[..., :3]  # Remove alpha channel
 
 def screenshot(x, y, w, h, output_dir, black_threshold=0.5, max_attempts=10):
+    '''
+    Validate with black pixels less than threshold within gray image
+    '''
     attempt = 0
     while attempt < max_attempts:
-        # Capture the screenshot
-        img = pyautogui.screenshot(region=(x, y, w, h))
-        img = np.array(img)
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        # Capture the screenshot using win32
+        img = capture_screenshot_win32(x, y, w, h)
         
         # Convert to grayscale and apply binary thresholding
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -170,7 +142,7 @@ def screenshot(x, y, w, h, output_dir, black_threshold=0.5, max_attempts=10):
         cv2.imwrite(os.path.join(output_dir, f'screenshot_gray.png'), gray)
         
         if black_ratio < black_threshold:
-            # Extract the red channel and apply bi`nary thresholding
+            # Extract the red channel and apply binary thresholding
             red_channel = img[:, :, 2]
             _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
             
@@ -187,13 +159,21 @@ def screenshot(x, y, w, h, output_dir, black_threshold=0.5, max_attempts=10):
             
             return gray_binary, combined_binary
         
-        # If white pixels are less than or equal to 1%, retry
+        # If black pixels are more than the threshold, retry
         attempt += 1
-        print(f"reginal screenshot attempt {attempt}: black area is {black_ratio * 100:.2f}%, retrying...")
+        print(f"Regional screenshot attempt {attempt}: black area is {black_ratio * 100:.2f}%, retrying...")
     
     # If max attempts reached, return None
     print("Max attempts reached. No valid screenshot captured.")
     return None, None
+
+def region_screenshot(point, size, output_dir, black_threshold=0.5, max_attempts=10):
+    '''
+    validate with black pixels less than threshold
+    '''
+    x, y = point
+    w, h = size
+    return screenshot(x, y, w, h, output_dir, black_threshold, max_attempts)
     
 # Debug
 def show_image(image):
@@ -212,6 +192,8 @@ def debug_visualize_lines(image, lines, output_path):
     
 # OCR
 def OCR_remain_time(image):
+    if image is None:
+        return None
     t_config = r'--psm 7 -c tessedit_char_whitelist=0123456789:'
     text = pytesseract.image_to_string(image, config=t_config)
     time_pattern = r'\d{2}:\d{2}:\d{2}'
@@ -221,6 +203,9 @@ def OCR_remain_time(image):
     return None
 
 def OCR_is_free(image):
+    '''
+    return match score > 50
+    '''
     t_config = r'-l chi_sim --psm 7'
     text = pytesseract.image_to_string(image, config=t_config)
     _, match_score = best_match_item(text, ['设备处于空闲状态'])
@@ -324,10 +309,13 @@ def department_status(dep_coords):
     1: in progress
     2: done
     '''
-    center_img = pick_region(dep_coords['free'], dep_coords['free_size'], 'dash_page', f"{DASH_PAGE_DIR}/full_screenshot.png", DASH_PAGE_DIR)
+    # check 设备处于空闲状态
+    center_img, _ = region_screenshot(dep_coords['free'], dep_coords['free_size'], DASH_PAGE_DIR)
     if OCR_is_free(center_img):
         return 0
-    timmer_img = pick_region(dep_coords['timmer'], dep_coords['timmer_size'], 'dash_page', f"{DASH_PAGE_DIR}/full_screenshot.png", DASH_PAGE_DIR)
+    
+    # read remain time: success -> in progress, fail -> done
+    timmer_img, _ = region_screenshot(dep_coords['timmer'], dep_coords['timmer_size'], DASH_PAGE_DIR)
     remain_time = OCR_remain_time(timmer_img)
     if remain_time is None:
         return 2
@@ -335,40 +323,40 @@ def department_status(dep_coords):
 
 def match_list_items():
     setup_output_directory(LIST_ITEMS_DIR)
-    full_screenshot(LIST_ITEMS_DIR)
-    list_edge_img = pick_region(departments_coords['list_point'], departments_coords['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_edges.png", LIST_ITEMS_DIR)
-    list_OCR_img = pick_region(departments_coords['list_point'], departments_coords['list_size'], 'full_list', f"{LIST_ITEMS_DIR}/full_screenshot_binary.png", LIST_ITEMS_DIR)
-    return list_cell_detector(list_edge_img, list_OCR_img)
+    list_edge_img, _ = region_screenshot(departments_coords['list_point'], departments_coords['list_size'], LIST_ITEMS_DIR)
+    list_OCR_img, _ = region_screenshot(departments_coords['list_point'], departments_coords['list_size'], LIST_ITEMS_DIR)
 
-def list_cell_detector(list_edge_img, list_OCR_img):
+    if list_edge_img is None or list_OCR_img is None:
+        raise Exception('❗ Error: fail to capture list image ❗')
     list_size = departments_coords['list_size']
     item_size = departments_coords['item_size']
     minLength = list_size[0] * 0.8
     minArea = int(item_size[0] * item_size[1] * 0.8)
 
+    # find split lines
     lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=30)
     debug_visualize_lines(list_edge_img, lines, LIST_ITEMS_DIR)
     if lines is None:
-        raise ValueError("Error: lines is empty. Please check images.")
+        raise Exception('❗ Error: no line was found ❗')
     horizontal_lines = []
     for line in lines:
         x1, y1, x2, y2 = line[0]
         if abs(y2 - y1) < 5:  # k approx 0
             horizontal_lines.append(y1)
     if horizontal_lines is None:
-        raise ValueError("Error: horizontal lines is empty. Please check images.")
+        raise Exception('❗ Error: no horizontal line was found, check debug image ❗')
 
     # cut image
     cells = cut_by_lines(list_OCR_img, horizontal_lines, minArea)
 
     if cells:
         return cells
-    raise ValueError("Error: cells is empty. Please check images.")
+    raise Exception('❗ Error: cells is empty. Please check images ❗')
 
 def dash_page():
     setup_output_directory(DASH_PAGE_DIR)
-    full_screenshot(DASH_PAGE_DIR)
     status = []
+
     for dep, coords in departments_coords['dash_page'].items():
         status.append((dep, department_status(coords)))
     print(f'dash page: {status}')

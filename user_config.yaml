@@ -4,6 +4,7 @@
 # UHD: 3840 * 2160: 2
 
 SCALE_FACTOR: 2
+MAIN_MONITOR: 1
 
 tech: 
   - guns
