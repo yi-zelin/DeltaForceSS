@@ -136,22 +136,22 @@ def full_screenshot(output_dir, threshold=0.005, max_attempts=10):
             edges = cv2.Canny(gray, 50, 150)
 
             # Save the images with the timestamp in the filename
-            cv2.imwrite(os.path.join(output_dir, f'full_screenshot.png'), screenshot)
+            cv2.imwrite(os.path.join(output_dir, f'full_screenshot.png'), img)
             cv2.imwrite(os.path.join(output_dir, f'full_screenshot_gray.png'), gray)
             cv2.imwrite(os.path.join(output_dir, f'full_screenshot_binary.png'), binary)
             cv2.imwrite(os.path.join(output_dir, f'full_screenshot_edges.png'), edges)
 
-            return screenshot, gray, binary, edges
+            return img, gray, binary, edges
         
         # If white pixels are less than or equal to 1%, retry
         attempt += 1
-        print(f"Attempt {attempt}: White area is {white_ratio * 100:.2f}% (less than 1%), retrying...")
+        print(f"full screenshot attempt {attempt}: White area is {white_ratio * 100:.2f}% (less than 1%), retrying...")
     
     # If max attempts reached, return None
     print("Max attempts reached. No valid screenshot captured.")
     return None, None, None, None
 
-def screenshot(x, y, w, h, output_dir, black_threshold=0.005, max_attempts=10):
+def screenshot(x, y, w, h, output_dir, black_threshold=0.5, max_attempts=10):
     attempt = 0
     while attempt < max_attempts:
         # Capture the screenshot
@@ -163,9 +163,11 @@ def screenshot(x, y, w, h, output_dir, black_threshold=0.005, max_attempts=10):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
         
-        black_pixels = np.sum(gray < 10)
+        black_pixels = np.sum(gray == 0)
         total_pixels = gray.size
         black_ratio = black_pixels / total_pixels
+        cv2.imwrite(os.path.join(output_dir, f'screenshot.png'), img)
+        cv2.imwrite(os.path.join(output_dir, f'screenshot_gray.png'), gray)
         
         if black_ratio < black_threshold:
             # Extract the red channel and apply bi`nary thresholding
@@ -187,7 +189,7 @@ def screenshot(x, y, w, h, output_dir, black_threshold=0.005, max_attempts=10):
         
         # If white pixels are less than or equal to 1%, retry
         attempt += 1
-        print(f"Attempt {attempt}: White area is {black_ratio * 100:.2f}%, retrying...")
+        print(f"reginal screenshot attempt {attempt}: black area is {black_ratio * 100:.2f}%, retrying...")
     
     # If max attempts reached, return None
     print("Max attempts reached. No valid screenshot captured.")
@@ -296,11 +298,6 @@ def find_buy_state():
         if white_pix >= w * h * 0.05:
             return index
     return -1
-
-# def exist_buy(x, y, w, h, threshold = 0.1):
-#     binary_img, _ = screenshot(x, y, x+w, y+h, BUY_DIR)
-#     white_pix = cv2.countNonZero(binary_img)
-#     return white_pix >= w * h * threshold
         
 def initalize_preparation():
     setup_output_directory(BUY_DIR)
@@ -348,7 +345,7 @@ def list_cell_detector(list_edge_img, list_OCR_img):
     minLength = list_size[0] * 0.8
     minArea = int(item_size[0] * item_size[1] * 0.8)
 
-    lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=20)
+    lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=30)
     debug_visualize_lines(list_edge_img, lines, LIST_ITEMS_DIR)
     if lines is None:
         raise ValueError("Error: lines is empty. Please check images.")
