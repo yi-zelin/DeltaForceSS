@@ -113,7 +113,7 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 
 # Screenshot
-def full_screenshot(output_dir, max_attempts=10):
+def full_screenshot(output_dir, threshold=0.005, max_attempts=10):
     attempt = 0
     while attempt < max_attempts:
         # Capture the full screenshot
@@ -132,7 +132,7 @@ def full_screenshot(output_dir, max_attempts=10):
         white_ratio = white_pixels / total_pixels
 
         # If white pixels are more than 1% of the total area, save and return
-        if white_ratio > 0.01:
+        if white_ratio > threshold:
             edges = cv2.Canny(gray, 50, 150)
 
             # Save the images with the timestamp in the filename
@@ -151,7 +151,7 @@ def full_screenshot(output_dir, max_attempts=10):
     print("Max attempts reached. No valid screenshot captured.")
     return None, None, None, None
 
-def screenshot(x, y, w, h, output_dir, max_attempts=10):
+def screenshot(x, y, w, h, output_dir, black_threshold=0.005, max_attempts=10):
     attempt = 0
     while attempt < max_attempts:
         # Capture the screenshot
@@ -163,14 +163,12 @@ def screenshot(x, y, w, h, output_dir, max_attempts=10):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
         
-        # Calculate the percentage of white pixels
-        white_pixels = np.sum(gray_binary == 255)
-        total_pixels = gray_binary.size
-        white_ratio = white_pixels / total_pixels
+        black_pixels = np.sum(gray < 10)
+        total_pixels = gray.size
+        black_ratio = black_pixels / total_pixels
         
-        # If white pixels are more than 1% of the total area, save and return
-        if white_ratio > 0.01:
-            # Extract the red channel and apply binary thresholding
+        if black_ratio < black_threshold:
+            # Extract the red channel and apply bi`nary thresholding
             red_channel = img[:, :, 2]
             _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
             
@@ -293,7 +291,7 @@ def find_buy_state():
     w, h = departments_coords['buy_size']
     for index, value in enumerate(buy_points):
         x, y = value
-        binary_img, _ = screenshot(x, y, w, h, BUY_DIR)
+        binary_img, _ = screenshot(x, y, w, h, BUY_DIR, 0)
         white_pix = cv2.countNonZero(binary_img)
         if white_pix >= w * h * 0.05:
             return index
