@@ -113,41 +113,87 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
 
 
 # Screenshot
-def full_screenshot(output_dir):
-    # pyautogui.moveTo(0, 0, duration=0.3)
-    screenshot = np.array(pyautogui.screenshot())
-    img_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-    img = adjust_gamma(img_bgr, gamma=0.9)
+def full_screenshot(output_dir, max_attempts=10):
+    attempt = 0
+    while attempt < max_attempts:
+        # Capture the full screenshot
+        screenshot = np.array(pyautogui.screenshot())
+        img_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+        img = adjust_gamma(img_bgr, gamma=0.9)
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
-    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-    edges = cv2.Canny(gray, 50, 150)
+        # Convert to grayscale and apply binary thresholding
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.convertScaleAbs(gray, alpha=1.7, beta=0)
+        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
 
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot.png'), screenshot)
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_gray.png'), gray)
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_binary.png'), binary)
-    cv2.imwrite(os.path.join(output_dir, 'full_screenshot_edges.png'), edges)
-    
+        # Calculate the percentage of white pixels
+        white_pixels = np.sum(binary == 255)
+        total_pixels = binary.size
+        white_ratio = white_pixels / total_pixels
 
-def screenshot(x, y, w, h, output_dir):
-    img = pyautogui.screenshot(region=(x, y, w, h))
-    img = np.array(img)
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-    red_channel = img[:, :, 2]
-    _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-    combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
+        # If white pixels are more than 1% of the total area, save and return
+        if white_ratio > 0.01:
+            edges = cv2.Canny(gray, 50, 150)
+
+            # Save the images with the timestamp in the filename
+            cv2.imwrite(os.path.join(output_dir, f'full_screenshot.png'), screenshot)
+            cv2.imwrite(os.path.join(output_dir, f'full_screenshot_gray.png'), gray)
+            cv2.imwrite(os.path.join(output_dir, f'full_screenshot_binary.png'), binary)
+            cv2.imwrite(os.path.join(output_dir, f'full_screenshot_edges.png'), edges)
+
+            return screenshot, gray, binary, edges
+        
+        # If white pixels are less than or equal to 1%, retry
+        attempt += 1
+        print(f"Attempt {attempt}: White area is {white_ratio * 100:.2f}% (less than 1%), retrying...")
     
-    timestamp = datetime.now().strftime("%H%M%S")
+    # If max attempts reached, return None
+    print("Max attempts reached. No valid screenshot captured.")
+    return None, None, None, None
+
+def screenshot(x, y, w, h, output_dir, max_attempts=10):
+    attempt = 0
+    while attempt < max_attempts:
+        # Capture the screenshot
+        img = pyautogui.screenshot(region=(x, y, w, h))
+        img = np.array(img)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        
+        # Convert to grayscale and apply binary thresholding
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+        
+        # Calculate the percentage of white pixels
+        white_pixels = np.sum(gray_binary == 255)
+        total_pixels = gray_binary.size
+        white_ratio = white_pixels / total_pixels
+        
+        # If white pixels are more than 1% of the total area, save and return
+        if white_ratio > 0.01:
+            # Extract the red channel and apply binary thresholding
+            red_channel = img[:, :, 2]
+            _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+            
+            # Combine the binary images using bitwise XOR
+            combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
+            
+            # Generate a timestamp (hours, minutes, seconds)
+            timestamp = datetime.now().strftime("%H%M%S")
+            
+            # Save the images with the timestamp in the filename
+            cv2.imwrite(os.path.join(output_dir, f'screenshot_red_binary_{timestamp}.png'), red_binary)
+            cv2.imwrite(os.path.join(output_dir, f'screenshot_combined_binary_{timestamp}.png'), combined_binary)
+            cv2.imwrite(os.path.join(output_dir, f'screenshot_gray_binary_{timestamp}.png'), gray_binary)
+            
+            return gray_binary, combined_binary
+        
+        # If white pixels are less than or equal to 1%, retry
+        attempt += 1
+        print(f"Attempt {attempt}: White area is {white_ratio * 100:.2f}% (less than 1%), retrying...")
     
-    # Save the images with the timestamp in the filename
-    cv2.imwrite(os.path.join(output_dir, f'screenshot_red_binary_{timestamp}.png'), red_binary)
-    cv2.imwrite(os.path.join(output_dir, f'screenshot_combined_binary_{timestamp}.png'), combined_binary)
-    cv2.imwrite(os.path.join(output_dir, f'screenshot_gray_binary_{timestamp}.png'), gray_binary)
-    
-    return gray_binary, combined_binary
+    # If max attempts reached, return None
+    print("Max attempts reached. No valid screenshot captured.")
+    return None, None
     
 # Debug
 def show_image(image):
