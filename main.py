@@ -293,7 +293,7 @@ def find_buy_state():
     w, h = departments_coords['buy_size']
     for index, value in enumerate(buy_points):
         x, y = value
-        binary_img, _ = screenshot(x, y, w, h, BUY_DIR, 0)
+        binary_img, _ = screenshot(x, y, w, h, BUY_DIR)
         white_pix = cv2.countNonZero(binary_img)
         if white_pix >= w * h * 0.05:
             return index
@@ -308,13 +308,14 @@ def initalize_preparation():
     # go to buy page
     click_position(departments_coords['buy_positions'][buy_state])
     time.sleep(3)
-    failed = buy_material() == -1
-    if failed:
+    price = buy_material()
+    if price == -1:
         print(f'⚠️ Failed to buy material: maximum retry attempts reached ⚠️')
-        
-    buy_state = find_buy_state()
-    if buy_state != -1 and buy_state != 0:
+    elif price == 0:
         print(f'⚠️ There is trade in only item ⚠️')
+        keyboard.send('esc')
+        time.sleep(1)
+    buy_state = find_buy_state()
     return buy_state == -1
 
 def department_status(dep_coords):
