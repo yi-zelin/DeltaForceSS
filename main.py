@@ -187,7 +187,7 @@ def screenshot(x, y, w, h, output_dir, black_threshold=0.005, max_attempts=10):
         
         # If white pixels are less than or equal to 1%, retry
         attempt += 1
-        print(f"Attempt {attempt}: White area is {white_ratio * 100:.2f}% (less than 1%), retrying...")
+        print(f"Attempt {attempt}: White area is {black_ratio * 100:.2f}%, retrying...")
     
     # If max attempts reached, return None
     print("Max attempts reached. No valid screenshot captured.")
@@ -316,7 +316,7 @@ def initalize_preparation():
         print(f'⚠️ Failed to buy material: maximum retry attempts reached ⚠️')
         
     buy_state = find_buy_state()
-    if buy_state != -1:
+    if buy_state != -1 and buy_state != 0:
         print(f'⚠️ There is trade in only item ⚠️')
     return buy_state == -1
 
