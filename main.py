@@ -480,11 +480,13 @@ def main():
         beep()
         time.sleep(30*60)
 
-def test_screenshot():
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    time.sleep(3)
-    img = full_screenshot(OUTPUT_DIR, 'original')
+def test_screenshot_dxcam():
+    capture_one_screenshot()
+    
+def test_screenshot_win32():
+    img = win32_screenshot()
+    cv2.imshow("win32", img)
+    cv2.waitKey(0)  # 按任意键关闭窗口
 
 def test_list_page():
     global departments_coords
@@ -499,8 +501,50 @@ def test_buy_material():
     setup_output_directory(LIST_ITEMS_DIR)
     time.sleep(2)
     find_buy_state()
+    
+
+def capture_one_screenshot(save_path=None, region=None):
+    """
+    用dxcam截取单张屏幕图片并显示
+    :param save_path: 可选保存路径（如 "screenshot.png"）
+    :param region: 可选截图区域 (left, top, width, height)
+    """
+    import dxcam
+    # 初始化dxcam（默认主显示器）
+    camera = dxcam.create()
+    
+    # 单次截图
+    if region:
+        left, top, width, height = region
+        frame = camera.grab(region=(left, top, left+width, top+height))
+    else:
+        frame = camera.grab()  # 全屏截图
+    
+    if frame is not None:
+        # 转换颜色格式（dxcam返回RGB，OpenCV需要BGR）
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        
+        # 显示截图
+        cv2.imshow("dxcam", frame_bgr)
+        cv2.waitKey(0)  # 按任意键关闭窗口
+        
+        # 可选保存
+        if save_path:
+            cv2.imwrite(save_path, frame_bgr)
+            print(f"截图已保存到: {save_path}")
+    else:
+        print("截图失败！")
+
+    cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
-    main()
+    # main()
     # test_list_page()
     # test_buy_material()
+    time.sleep(1)
+    while True:
+        test_screenshot_dxcam()
+        time.sleep(1)
+        test_screenshot_win32()
+        time.sleep(1)
