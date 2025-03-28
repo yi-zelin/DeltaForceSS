@@ -478,7 +478,7 @@ def main():
         dash_page()
         print('🎉 Finished!')
         beep()
-        time.sleep(600)
+        time.sleep(30*60)
 
 def test_screenshot():
     global departments_coords
