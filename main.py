@@ -9,13 +9,14 @@ import re
 import time
 import keyboard
 import winsound
-import win32gui, win32ui, win32con
+import win32gui, win32ui, win32con, win32api
+from PIL import Image
 from rapidfuzz import fuzz
 from datetime import datetime
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
-    
+
 with open('user_config.yaml', 'r', encoding='utf-8') as fin:
     user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
@@ -73,10 +74,10 @@ def craft(coordination):
 
 
 # Image
-# def adjust_gamma(image, gamma=1.0):
-#     inv_gamma = 1.0 / gamma
-#     table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-#     return cv2.LUT(image, table)
+def adjust_gamma(image, gamma=1.0):
+    inv_gamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+    return cv2.LUT(image, table)
 
 def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     '''
@@ -92,7 +93,7 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
         if y > prev_y:
             cell = list_img[prev_y:y, 0:width]
             # area = # black pixel
-            area = np.sum(cell == 0)
+            area = cell.size
             if area > min_area:
                 # center y coord
                 center_y = prev_y + (y - prev_y) // 2
@@ -101,95 +102,136 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
             prev_y = y
     return cells
 
-
 # Screenshot
-def capture_screenshot_win32(x, y, w, h):
-    hdesktop = win32gui.GetDesktopWindow()
-    hwnd = win32gui.GetWindow(hdesktop, win32con.GW_CHILD)
+def win32_screenshot():
+    """Return NumPy format full screenshot in correct RGB format, with optional raw image display"""
+    # Get screen dimensions
+    width = win32api.GetSystemMetrics(0)
+    height = win32api.GetSystemMetrics(1)
+
+    # Capture screenshot
+    hwnd = win32gui.GetDesktopWindow()
     hdc = win32gui.GetWindowDC(hwnd)
-    cdc = win32ui.CreateDCFromHandle(hdc)
-    mdc = cdc.CreateCompatibleDC()
-    bmp = win32ui.CreateBitmap()
-    bmp.CreateCompatibleBitmap(cdc, w, h)
-    mdc.SelectObject(bmp)
-    mdc.BitBlt((0, 0), (w, h), cdc, (x, y), win32con.SRCCOPY)
-    bmpinfo = bmp.GetInfo()
-    bmpstr = bmp.GetBitmapBits(True)
-    img = np.frombuffer(bmpstr, dtype='uint8').reshape((bmpinfo['bmHeight'], bmpinfo['bmWidth'], 4))
-    win32gui.DeleteObject(bmp.GetHandle())
-    mdc.DeleteDC()
-    cdc.DeleteDC()
+    mfc_dc = win32ui.CreateDCFromHandle(hdc)
+    save_dc = mfc_dc.CreateCompatibleDC()
+    save_bitmap = win32ui.CreateBitmap()
+    save_bitmap.CreateCompatibleBitmap(mfc_dc, width, height)
+    save_dc.SelectObject(save_bitmap)
+    save_dc.BitBlt((0, 0), (width, height), mfc_dc, (0, 0), win32con.SRCCOPY)
+
+    # Convert to NumPy array (RAW FORMAT - BGRA)
+    bmp_str = save_bitmap.GetBitmapBits(True)
+    img_raw = np.frombuffer(bmp_str, dtype=np.uint8)
+    img_raw = img_raw.reshape((height, width, 4))  # BGRA format
+
+    # Process colors: BGRA -> RGB
+    img_rgb = img_raw[:, :, :3]
+
+    # Cleanup resources
+    win32gui.DeleteObject(save_bitmap.GetHandle())
+    save_dc.DeleteDC()
+    mfc_dc.DeleteDC()
     win32gui.ReleaseDC(hwnd, hdc)
-    return img[..., :3]  # Remove alpha channel
 
-def screenshot(x, y, w, h, output_dir, black_threshold=0.5, max_attempts=10):
-    '''
-    Validate with black pixels less than threshold within gray image
-    '''
-    attempt = 0
-    while attempt < max_attempts:
-        # Capture the screenshot using win32
-        img = capture_screenshot_win32(x, y, w, h)
-        
-        # Convert to grayscale and apply binary thresholding
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, gray_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-        
-        black_pixels = np.sum(gray == 0)
+    return img_rgb
+
+def full_screenshot(output_dir, type='binary', binary_white_threshold=0.008, max_attemps=10):
+    '''return valid full screenshot'''
+    attemps = 0
+    while attemps < max_attemps:
+        screenshot = win32_screenshot()
+
+        # save with unique name
+        image_hash = hashlib.md5(screenshot.tobytes()).hexdigest()[:8]
+        output_filename = f'screenshot_{image_hash}.png'
+        t_path = os.path.join(output_dir, output_filename)
+        cv2.imwrite(t_path, screenshot)
+
+        gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        edge = cv2.Canny(gray, 25, 90)
+
+        # check if binary have engouh white pixels:
         total_pixels = gray.size
-        black_ratio = black_pixels / total_pixels
-        cv2.imwrite(os.path.join(output_dir, f'screenshot.png'), img)
-        cv2.imwrite(os.path.join(output_dir, f'screenshot_gray.png'), gray)
-        
-        if black_ratio < black_threshold:
-            # Extract the red channel and apply binary thresholding
-            red_channel = img[:, :, 2]
-            _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-            
-            # Combine the binary images using bitwise XOR
-            combined_binary = cv2.bitwise_xor(gray_binary, red_binary)
-            
-            # Generate a timestamp (hours, minutes, seconds)
-            timestamp = datetime.now().strftime("%H%M%S")
-            
-            # Save the images with the timestamp in the filename
-            cv2.imwrite(os.path.join(output_dir, f'screenshot_red_binary_{timestamp}.png'), red_binary)
-            cv2.imwrite(os.path.join(output_dir, f'screenshot_combined_binary_{timestamp}.png'), combined_binary)
-            cv2.imwrite(os.path.join(output_dir, f'screenshot_gray_binary_{timestamp}.png'), gray_binary)
-            
-            return gray_binary, combined_binary
-        
-        # If black pixels are more than the threshold, retry
-        attempt += 1
-        print(f"Regional screenshot attempt {attempt}: black area is {black_ratio * 100:.2f}%, retrying...")
-    
-    # If max attempts reached, return None
-    print("Max attempts reached. No valid screenshot captured.")
-    return None, None
+        white_pixels = np.sum(edge == 255)
+        ratio = white_pixels / total_pixels
+        if ratio >= binary_white_threshold:
+            print(f'Success with white ratio: {ratio}')
+            break
+        attemps += 1
+        print(f'Fail with white ratio: {ratio}')
 
-def region_screenshot(point, size, output_dir, black_threshold=0.5, max_attempts=10):
-    '''
-    validate with black pixels less than threshold
-    '''
-    x, y = point
-    w, h = size
-    return screenshot(x, y, w, h, output_dir, black_threshold, max_attempts)
-    
+    if attemps == max_attemps:
+        raise Exception(f'❗ Max attempts reached. No valid screenshot captured ❗')
+
+    # now screenshot, gray, binary are valid images
+    cv2.imwrite(os.path.join(output_dir, f'full_screenshot.png'), screenshot)
+    cv2.imwrite(os.path.join(output_dir, f'gray_screenshot.png'), gray)
+    cv2.imwrite(os.path.join(output_dir, f'edge_screenshot.png'), edge)
+    cv2.imwrite(os.path.join(output_dir, f'binary_screenshot.png'), binary)
+    if type == 'binary':
+        cv2.imwrite(os.path.join(output_dir, f'binary_full_screenshot.png'), binary)
+        return binary
+    elif type == 'gray':
+        cv2.imwrite(os.path.join(output_dir, f'gray_full_screenshot.png'), gray)
+        return gray
+    elif type == 'original':
+        return screenshot
+    elif type == 'combined_binary':
+        # remove coin icon in front of price
+        red_channel = screenshot[:, :, 2]
+        _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+        combined_binary = cv2.bitwise_xor(binary, red_binary)
+        cv2.imwrite(os.path.join(output_dir, f'combined_binary_full_screenshot.png'), combined_binary)
+        return combined_binary
+    elif type == 'edge':
+        edge = cv2.Canny(gray, 25, 90)
+        cv2.imwrite(os.path.join(output_dir, f'edge_full_screenshot.png'), edge)
+        return edge, binary
+    else:
+        raise ValueError(f'❗ {type} is not a valid input ❗')
+
+def cropImage(image, output_dir, x, y, w, h):
+    cropped = image[y:y+h, x:x+w]
+
+    now = datetime.now()
+    timestamp = now.strftime('%M_%S_%f')[:-3]
+    filename = f'edge_full_screenshot_{timestamp}.png'
+    filepath = os.path.join(output_dir, filename)
+    cv2.imwrite(filepath, cropped)
+    return cropped
+
+
 # Debug
 def show_image(image):
     cv2.imshow('image', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+import hashlib
+import os
+
 def debug_visualize_lines(image, lines, output_path):
+    # Create a copy of the image in RGB format
     image_with_lines = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2RGB)
 
+    # Draw all lines on the image
     for line in lines:
         x1, y1, x2, y2 = line[0]
-        cv2.line(image_with_lines, (x1, y1), (x2, y2), (0, 255, 0), 1) # green line thickness = 1 px
-    cv2.imwrite(os.path.join(LIST_ITEMS_DIR, f'debug_lines.png'), image_with_lines)
+        cv2.line(image_with_lines, (x1, y1), (x2, y2), (0, 255, 0), 1)  # green line thickness = 1 px
     
+    # Generate unique hash from image data
+    image_hash = hashlib.md5(image_with_lines.tobytes()).hexdigest()[:8]
     
+    # Create output filename with hash
+    output_filename = f'debug_lines_{image_hash}.png'
+    full_output_path = os.path.join(output_path, output_filename)
+    
+    # Save the image
+    cv2.imwrite(full_output_path, image_with_lines)
+    
+    return full_output_path  # Return the full path where image was saved
+
 # OCR
 def OCR_remain_time(image):
     if image is None:
@@ -216,7 +258,7 @@ def OCR_is_free(image):
 def OCR_item_name(image, dep):
     OCR_config = config['OCR_configs'][dep]
     text = pytesseract.image_to_string(image, config=OCR_config)
-    
+
     # manual improvement
     text = text.replace("番", "盔")
     return text
@@ -226,10 +268,10 @@ def OCR_price(image):
     text = pytesseract.image_to_string(image, config=t_config)
     price = re.sub(r'[^\d]', '', text)
     if price == '':
-        return None    
+        return None
     print(f'🪙 OCR price: {price} 🪙')
     return int(price)
-    
+
 
 def best_match_item(str1, reference):
     max_score = 0
@@ -246,15 +288,17 @@ def best_match_item(str1, reference):
 # Other function
 def beep():
     winsound.Beep(1000, 500)
-    
+
 def buy_material():
+    # purchase page
     x, y = departments_coords['price_point']
     w, h = departments_coords['price_size']
     price = None
-    
+
     trial = 11
     for i in range(trial):
-        _, image = screenshot(x, y, w, h, BUY_DIR)
+        screenshot = full_screenshot(BUY_DIR, 'combined_binary', 0.004)
+        image = cropImage(screenshot, BUY_DIR, x, y, w, h)
         price = OCR_price(image)
         if price is not None:
             if i == trial - 1:
@@ -276,20 +320,23 @@ def find_buy_state():
     '''
     buy_points = departments_coords['buy_points']
     w, h = departments_coords['buy_size']
+    screenshot = full_screenshot(BUY_DIR, 'binary', 0.01)
     for index, value in enumerate(buy_points):
         x, y = value
-        binary_img, _ = screenshot(x, y, w, h, BUY_DIR)
-        white_pix = cv2.countNonZero(binary_img)
-        if white_pix >= w * h * 0.05:
+        binary_img = cropImage(screenshot, BUY_DIR, x, y, w, h)
+        white_pix = np.sum(binary_img == 255)
+        white_ratio = white_pix / binary_img.size
+        print(f'buy position {index}: {white_ratio}')
+        if white_ratio >= 0.05:
             return index
     return -1
-        
+
 def initalize_preparation():
     setup_output_directory(BUY_DIR)
     buy_state = find_buy_state()
     if buy_state == -1:
         return True
-    
+
     # go to buy page
     click_position(departments_coords['buy_positions'][buy_state])
     time.sleep(3)
@@ -309,32 +356,42 @@ def department_status(dep_coords):
     1: in progress
     2: done
     '''
+
     # check 设备处于空闲状态
-    center_img, _ = region_screenshot(dep_coords['free'], dep_coords['free_size'], DASH_PAGE_DIR)
+    screenshot = full_screenshot(DASH_PAGE_DIR, 'binary', 0.025)
+    x, y = dep_coords['free']
+    w, h = dep_coords['free_size']
+    center_img = cropImage(screenshot, DASH_PAGE_DIR, x, y, w, h)
     if OCR_is_free(center_img):
         return 0
-    
+
     # read remain time: success -> in progress, fail -> done
-    timmer_img, _ = region_screenshot(dep_coords['timmer'], dep_coords['timmer_size'], DASH_PAGE_DIR)
+    x, y = dep_coords['timmer']
+    w, h = dep_coords['timmer_size']
+    timmer_img = cropImage(screenshot, DASH_PAGE_DIR, x, y, w, h)
     remain_time = OCR_remain_time(timmer_img)
     if remain_time is None:
         return 2
     return 1
 
 def match_list_items():
-    setup_output_directory(LIST_ITEMS_DIR)
-    list_edge_img, _ = region_screenshot(departments_coords['list_point'], departments_coords['list_size'], LIST_ITEMS_DIR)
-    list_OCR_img, _ = region_screenshot(departments_coords['list_point'], departments_coords['list_size'], LIST_ITEMS_DIR)
+    gray = full_screenshot(LIST_ITEMS_DIR, 'gray', 0.01)
+    edge = cv2.Canny(gray, 25, 90)
+    x, y = departments_coords['list_point']
+    w, h = departments_coords['list_size']
+    list_edge_img = cropImage(edge, LIST_ITEMS_DIR, x, y, w, h)
+    list_OCR_img = cropImage(gray, LIST_ITEMS_DIR, x, y, w, h)
 
     if list_edge_img is None or list_OCR_img is None:
         raise Exception('❗ Error: fail to capture list image ❗')
+
     list_size = departments_coords['list_size']
     item_size = departments_coords['item_size']
     minLength = list_size[0] * 0.8
     minArea = int(item_size[0] * item_size[1] * 0.8)
 
     # find split lines
-    lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=30)
+    lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=50)
     debug_visualize_lines(list_edge_img, lines, LIST_ITEMS_DIR)
     if lines is None:
         raise Exception('❗ Error: no line was found ❗')
@@ -367,14 +424,14 @@ def dash_page():
             time.sleep(3)
             keyboard.send('space')
             time.sleep(3)
-            state = 0  
+            state = 0
         if state == 0:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
-            
+
 def list_page(department):
-    category, target = user_config[department]  
+    category, target = user_config[department]
     list_page_operation(department, category, target)
 
 def list_page_operation(department, category, target):
@@ -384,7 +441,8 @@ def list_page_operation(department, category, target):
     x = list_point[0] + int(list_size[0] / 2)
     y_offset = list_point[1]
     last_top_item = None
-    
+    setup_output_directory(LIST_ITEMS_DIR)
+
     for _ in range(100):
         y1 = 20
         cells = match_list_items()
@@ -397,7 +455,7 @@ def list_page_operation(department, category, target):
             keyboard.send('esc')
             time.sleep(1)
             return
-        
+
         for i in cells:
             img, y = i
             # show_image(img)
@@ -416,12 +474,33 @@ def main():
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     while True:
         beep()
-        time.sleep(6)
+        time.sleep(3)
         dash_page()
         print('🎉 Finished!')
         beep()
         time.sleep(600)
 
+def test_screenshot():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    time.sleep(3)
+    img = full_screenshot(OUTPUT_DIR, 'original')
+
+def test_list_page():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    setup_output_directory(LIST_ITEMS_DIR)
+    time.sleep(2)
+    match_list_items()
+
+def test_buy_material():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    setup_output_directory(LIST_ITEMS_DIR)
+    time.sleep(2)
+    find_buy_state()
+
 if __name__ == "__main__":
     main()
-    
+    # test_list_page()
+    # test_buy_material()
