@@ -1,9 +1,11 @@
 # 16:9 Only!!!
+
+
 # FHD: 1920 * 1080: 1
 # QHD: 2560 * 1440: 1.33
 # UHD: 3840 * 2160: 2
-
 SCALE_FACTOR: 2
+
 debug_mode: True
 
 tech: 
