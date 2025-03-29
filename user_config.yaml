@@ -4,10 +4,11 @@
 # UHD: 3840 * 2160: 2
 
 SCALE_FACTOR: 2
+debug_mode: True
 
 tech: 
   - guns
-  - SR-3M紧凑突击步枪
+  - M14射手步枪
 work:
   - level_4
   - 6.8x51mm FMJ
