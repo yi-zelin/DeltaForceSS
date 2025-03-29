@@ -239,17 +239,15 @@ def high_beep():
 def low_beep():
     winsound.Beep(500, 500)
     
-def find_shortest_time(time_array):
+def shortest_time(pairs):
     def time_to_seconds(time_str):
+        if time_str is None:
+            return None
         hh, mm, ss = map(int, time_str.split(':'))
         return hh * 3600 + mm * 60 + ss
     
-    if not time_array:
-        return None, 0
-    
-    shortest_time = min(time_array, key=time_to_seconds)
-    seconds = time_to_seconds(shortest_time)
-    return seconds
+    time_seconds = [time_to_seconds(time) for _, time in pairs if time is not None]
+    return min(time_seconds) if time_seconds else 10*60
 
 def buy_material():
     # purchase page
@@ -371,7 +369,8 @@ def match_list_items():
     raise Exception('❗ Error: cells is empty. Please check images ❗')
 
 def dash_page():
-    setup_output_directory(OUTPUT_DIR)
+    if debug_mode:
+        setup_output_directory(OUTPUT_DIR)
     status = []
     dash_img = screenshot('binary', 'department_status')
 
@@ -402,8 +401,6 @@ def dash_page():
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
-    
-    return find_shortest_time(remain_times)
 
 def list_page(department):
     category, target = user_config[department]
@@ -447,19 +444,29 @@ def main():
     while True:
         high_beep()
         time.sleep(3)
-        remain_time = dash_page()
+        dash_page()
+        time.sleep(3)
+        
+        dash_img = screenshot('binary', 'department_status')
+        dep_status = []
+        for dep, coords in departments_coords['dash_page'].items():
+            dep_status.append(department_status(dash_img, coords))
+        remain_time = shortest_time(dep_status)
         remain_time += 1*60     # 1 min buffer
-        print(f'🎉 Finished! start after {remain_time} sec\n')
+        print(f'🎉 Finished! restart after {remain_time // 3600}:{(remain_time % 3600) // 60}:{remain_time % 60}\n')
+        
         low_beep()
         time.sleep(remain_time)
         
 def test():
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    # global departments_coords
+    # departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
 
-    time.sleep(3)
-    img = screenshot()
+    # time.sleep(3)
+    # img = screenshot()
+    print(shortest_time([('toenhu','10:20:10'),('th', None), ('the', '00:00:10')]))
 
 
 if __name__ == "__main__":
     main()
+    # test()
