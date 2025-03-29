@@ -233,8 +233,23 @@ def best_match_item(str1, reference):
 
 
 # Other function
-def beep():
-    winsound.Beep(1000, 500)
+def high_beep():
+    winsound.Beep(2000, 500)
+
+def low_beep():
+    winsound.Beep(500, 500)
+    
+def find_shortest_time(time_array):
+    def time_to_seconds(time_str):
+        hh, mm, ss = map(int, time_str.split(':'))
+        return hh * 3600 + mm * 60 + ss
+    
+    if not time_array:
+        return None, 0
+    
+    shortest_time = min(time_array, key=time_to_seconds)
+    seconds = time_to_seconds(shortest_time)
+    return seconds
 
 def buy_material():
     # purchase page
@@ -366,16 +381,17 @@ def dash_page():
     # print result
     print(f'✅ dash page info:')
     for dep, info in status:
-        state, time = info
+        state, remain_time = info
         if state == 0:
             print(f'\t{dep}\t not started')
         elif state == 1:
-            print(f'\t{dep}\t working:\t{time}')
+            print(f'\t{dep}\t working:\t{remain_time}')
         else:
             print(f'\t{dep}\t completed!')
-
-    for dep, state in status:
-        state, _ = state
+    remain_times = []
+    for dep, info in status:
+        state, remain_time = info
+        remain_times.append(remain_time)
         if state == 2:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
@@ -386,6 +402,8 @@ def dash_page():
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
+    
+    return find_shortest_time(remain_times)
 
 def list_page(department):
     category, target = user_config[department]
@@ -427,12 +445,13 @@ def main():
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     while True:
-        beep()
+        high_beep()
         time.sleep(3)
-        dash_page()
-        print('🎉 Finished!')
-        beep()
-        time.sleep(30*60)
+        remain_time = dash_page()
+        remain_time += 1*60     # 1 min buffer
+        print(f'🎉 Finished! start after {remain_time} sec\n')
+        low_beep()
+        time.sleep(remain_time)
         
 def test():
     global departments_coords
