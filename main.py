@@ -102,42 +102,47 @@ def screenshot(type = 'binary', hint = 'placeholder', region = None):
     region (x, y, w, h)
     """
     camera = dxcam.create()
-    if region:
-        x, y, w, h = region
-        frame = camera.grab(region=(x, y, x+w, y+h))
-    else:
-        frame = camera.grab()
-    
-    if frame is not None:
-        original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        if debug_mode:
-            red_channel = original_img[:, :, 2]
-            _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            combined_binary = cv2.bitwise_xor(binary, red_binary)
-            save_image([(original_img, f'{hint}_original', None),
-                        (gray, f'{hint}_gray', None),
-                        (binary, f'{hint}_binary', None),
-                        (combined_binary, f'{hint}_combinedBinary', None)])
-        
-        if type == 'binary':
-            return binary
-        elif type == 'original':
-            return original_img
-        elif type == 'gray':
-            return gray
-        elif type == 'combined_binary':
-            # remove coin icon in front of price
-            red_channel = original_img[:, :, 2]
-            _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-            combined_binary = cv2.bitwise_xor(binary, red_binary)
-            return combined_binary
+    try:
+        if region:
+            x, y, w, h = region
+            frame = camera.grab(region=(x, y, x+w, y+h))
         else:
-            raise ValueError(f'❗ Error: unsupported image type ❗')
-    else:
-        raise Exception(f'❗ Faild: screenshot ❗')
+            frame = camera.grab()
+        
+        if frame is not None:
+            original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
+            _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            
+            if debug_mode:
+                red_channel = original_img[:, :, 2]
+                _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                combined_binary = cv2.bitwise_xor(binary, red_binary)
+                save_image([(original_img, f'{hint}_original', None),
+                            (gray, f'{hint}_gray', None),
+                            (binary, f'{hint}_binary', None),
+                            (combined_binary, f'{hint}_combinedBinary', None)])
+            
+            if type == 'binary':
+                return binary
+            elif type == 'original':
+                return original_img
+            elif type == 'gray':
+                return gray
+            elif type == 'combined_binary':
+                # remove coin icon in front of price
+                red_channel = original_img[:, :, 2]
+                _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+                combined_binary = cv2.bitwise_xor(binary, red_binary)
+                return combined_binary
+            else:
+                raise ValueError(f'❗ Error: unsupported image type ❗')
+        else:
+            raise Exception(f'❗ Faild: screenshot ❗')
+    finally:
+        camera.stop()
+        del camera
+    
 
 def cropImage(image, region):
     x, y, w, h = region
@@ -441,9 +446,16 @@ def list_page_operation(department, category, target):
 def main():
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    background_mode = user_config['background_mode']
+    hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
+    hwnd_desktop = win32gui.FindWindow("Progman", "Program Manager")
+    
     while True:
         high_beep()
-        time.sleep(3)
+        time.sleep(1)
+        if background_mode:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            time.sleep(3)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
         dash_page()
         time.sleep(3)
         
@@ -453,6 +465,11 @@ def main():
             dep_status.append(department_status(dash_img, coords))
         remain_time = shortest_time(dep_status)
         remain_time += 1*60     # 1 min buffer
+        
+        if background_mode:
+            win32gui.SetForegroundWindow(hwnd_desktop)
+            time.sleep(3)
+        
         print(f'🎉 Finished! restart after {remain_time // 3600}:{(remain_time % 3600) // 60}:{remain_time % 60}\n')
         
         low_beep()
