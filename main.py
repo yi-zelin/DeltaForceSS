@@ -9,7 +9,9 @@ import re
 import time
 import keyboard
 import winsound
+import hashlib
 import win32gui, win32ui, win32con, win32api
+import dxcam
 from PIL import Image
 from rapidfuzz import fuzz
 from datetime import datetime
@@ -21,15 +23,12 @@ with open('user_config.yaml', 'r', encoding='utf-8') as fin:
     user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
 SCALE_FACTOR = user_config['SCALE_FACTOR']
-MAIN_MONITOR = user_config['MAIN_MONITOR']
 OUTPUT_DIR = './log'
-LIST_ITEMS_DIR = f'{OUTPUT_DIR}/list_items'
-DASH_PAGE_DIR = f'{OUTPUT_DIR}/dash_page'
-BUY_DIR = f'{OUTPUT_DIR}/buy'
 TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
+debug_mode = user_config['debug_mode']
 
 # Setup
 def setup_output_directory(output_dir):
@@ -74,11 +73,6 @@ def craft(coordination):
 
 
 # Image
-def adjust_gamma(image, gamma=1.0):
-    inv_gamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-    return cv2.LUT(image, table)
-
 def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     '''
     return list of (image, y position) array
@@ -91,6 +85,7 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     prev_y = 0
     for y in horizontal_lines:
         if y > prev_y:
+            # TODO: use crop_image()
             cell = list_img[prev_y:y, 0:width]
             # area = # black pixel
             area = cell.size
@@ -98,107 +93,58 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
                 # center y coord
                 center_y = prev_y + (y - prev_y) // 2
                 cells.append((cell, center_y))
-                cv2.imwrite(os.path.join(LIST_ITEMS_DIR, f'{prefix}_{prev_y}_{y}.png'), cell)
             prev_y = y
     return cells
 
 # Screenshot
-def win32_screenshot():
-    """Return NumPy format full screenshot in correct RGB format, with optional raw image display"""
-    # Get screen dimensions
-    width = win32api.GetSystemMetrics(0)
-    height = win32api.GetSystemMetrics(1)
-
-    # Capture screenshot
-    hwnd = win32gui.GetDesktopWindow()
-    hdc = win32gui.GetWindowDC(hwnd)
-    mfc_dc = win32ui.CreateDCFromHandle(hdc)
-    save_dc = mfc_dc.CreateCompatibleDC()
-    save_bitmap = win32ui.CreateBitmap()
-    save_bitmap.CreateCompatibleBitmap(mfc_dc, width, height)
-    save_dc.SelectObject(save_bitmap)
-    save_dc.BitBlt((0, 0), (width, height), mfc_dc, (0, 0), win32con.SRCCOPY)
-
-    # Convert to NumPy array (RAW FORMAT - BGRA)
-    bmp_str = save_bitmap.GetBitmapBits(True)
-    img_raw = np.frombuffer(bmp_str, dtype=np.uint8)
-    img_raw = img_raw.reshape((height, width, 4))  # BGRA format
-
-    # Process colors: BGRA -> RGB
-    img_rgb = img_raw[:, :, :3]
-
-    # Cleanup resources
-    win32gui.DeleteObject(save_bitmap.GetHandle())
-    save_dc.DeleteDC()
-    mfc_dc.DeleteDC()
-    win32gui.ReleaseDC(hwnd, hdc)
-
-    return img_rgb
-
-def full_screenshot(output_dir, type='binary', binary_white_threshold=0.008, max_attemps=10):
-    '''return valid full screenshot'''
-    attemps = 0
-    while attemps < max_attemps:
-        screenshot = win32_screenshot()
-
-        # save with unique name
-        image_hash = hashlib.md5(screenshot.tobytes()).hexdigest()[:8]
-        output_filename = f'screenshot_{image_hash}.png'
-        t_path = os.path.join(output_dir, output_filename)
-        cv2.imwrite(t_path, screenshot)
-
-        gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        edge = cv2.Canny(gray, 25, 90)
-
-        # check if binary have engouh white pixels:
-        total_pixels = gray.size
-        white_pixels = np.sum(edge == 255)
-        ratio = white_pixels / total_pixels
-        if ratio >= binary_white_threshold:
-            print(f'Success with white ratio: {ratio}')
-            break
-        attemps += 1
-        print(f'Fail with white ratio: {ratio}')
-
-    if attemps == max_attemps:
-        raise Exception(f'❗ Max attempts reached. No valid screenshot captured ❗')
-
-    # now screenshot, gray, binary are valid images
-    cv2.imwrite(os.path.join(output_dir, f'full_screenshot.png'), screenshot)
-    cv2.imwrite(os.path.join(output_dir, f'gray_screenshot.png'), gray)
-    cv2.imwrite(os.path.join(output_dir, f'edge_screenshot.png'), edge)
-    cv2.imwrite(os.path.join(output_dir, f'binary_screenshot.png'), binary)
-    if type == 'binary':
-        cv2.imwrite(os.path.join(output_dir, f'binary_full_screenshot.png'), binary)
-        return binary
-    elif type == 'gray':
-        cv2.imwrite(os.path.join(output_dir, f'gray_full_screenshot.png'), gray)
-        return gray
-    elif type == 'original':
-        return screenshot
-    elif type == 'combined_binary':
-        # remove coin icon in front of price
-        red_channel = screenshot[:, :, 2]
-        _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-        combined_binary = cv2.bitwise_xor(binary, red_binary)
-        cv2.imwrite(os.path.join(output_dir, f'combined_binary_full_screenshot.png'), combined_binary)
-        return combined_binary
-    elif type == 'edge':
-        edge = cv2.Canny(gray, 25, 90)
-        cv2.imwrite(os.path.join(output_dir, f'edge_full_screenshot.png'), edge)
-        return edge, binary
+def screenshot(type = 'binary', hint = 'placeholder', region = None):
+    """
+    region (x, y, w, h)
+    """
+    camera = dxcam.create()
+    if region:
+        x, y, w, h = region
+        frame = camera.grab(region=(x, y, x+w, y+h))
     else:
-        raise ValueError(f'❗ {type} is not a valid input ❗')
+        frame = camera.grab()
+    
+    if frame is not None:
+        original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        if debug_mode:
+            red_channel = original_img[:, :, 2]
+            _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            combined_binary = cv2.bitwise_xor(binary, red_binary)
+            save_image([(original_img, f'{hint}_original', None),
+                        (gray, f'{hint}_gray', None),
+                        (binary, f'{hint}_binary', None),
+                        (combined_binary, f'{hint}_combinedBinary', None)])
+        
+        if type == 'binary':
+            return binary
+        elif type == 'original':
+            return original_img
+        elif type == 'gray':
+            return gray
+        elif type == 'combined_binary':
+            # remove coin icon in front of price
+            red_channel = original_img[:, :, 2]
+            _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+            combined_binary = cv2.bitwise_xor(binary, red_binary)
+            return combined_binary
+        else:
+            raise ValueError(f'❗ Error: unsupported image type ❗')
+    else:
+        raise Exception(f'❗ Faild: screenshot ❗')
 
-def cropImage(image, output_dir, x, y, w, h):
+def cropImage(image, region):
+    x, y, w, h = region
     cropped = image[y:y+h, x:x+w]
 
-    now = datetime.now()
-    timestamp = now.strftime('%M_%S_%f')[:-3]
-    filename = f'edge_full_screenshot_{timestamp}.png'
-    filepath = os.path.join(output_dir, filename)
-    cv2.imwrite(filepath, cropped)
+    if debug_mode:
+        save_image([(cropped, 'cropped', region)])
     return cropped
 
 
@@ -207,11 +153,20 @@ def show_image(image):
     cv2.imshow('image', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+    
+def save_image(image_hint_region_tuples):
+    '''
+    (image, hint, region)
+    '''
+    timestamp = datetime.now().strftime("%H_%M_%S_%f")[:-3]  # hh:mm:ss:sss
+    for image, hint, region in image_hint_region_tuples:
+        if region:
+            x, y, w, h = region
+            cv2.imwrite(os.path.join(OUTPUT_DIR, f'{timestamp}_{hint}_{x},{y},{w},{h}.png'), image)
+        else:
+            cv2.imwrite(os.path.join(OUTPUT_DIR, f'{timestamp}_{hint}.png'), image)
 
-import hashlib
-import os
-
-def debug_visualize_lines(image, lines, output_path):
+def debug_visualize_lines(image, lines):
     # Create a copy of the image in RGB format
     image_with_lines = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2RGB)
 
@@ -223,14 +178,7 @@ def debug_visualize_lines(image, lines, output_path):
     # Generate unique hash from image data
     image_hash = hashlib.md5(image_with_lines.tobytes()).hexdigest()[:8]
     
-    # Create output filename with hash
-    output_filename = f'debug_lines_{image_hash}.png'
-    full_output_path = os.path.join(output_path, output_filename)
-    
-    # Save the image
-    cv2.imwrite(full_output_path, image_with_lines)
-    
-    return full_output_path  # Return the full path where image was saved
+    save_image([(image_with_lines, 'list_lines', None)])
 
 # OCR
 def OCR_remain_time(image):
@@ -269,7 +217,7 @@ def OCR_price(image):
     price = re.sub(r'[^\d]', '', text)
     if price == '':
         return None
-    print(f'🪙 OCR price: {price} 🪙')
+    print(f'✅ OCR price: {price}')
     return int(price)
 
 
@@ -278,7 +226,6 @@ def best_match_item(str1, reference):
     best_match = None
     for item in reference:
         score = fuzz.partial_ratio(str1, item)
-        # print(f'{item}: {score}')
         if score > max_score:
             max_score = score
             best_match = item
@@ -297,8 +244,7 @@ def buy_material():
 
     trial = 11
     for i in range(trial):
-        screenshot = full_screenshot(BUY_DIR, 'combined_binary', 0.004)
-        image = cropImage(screenshot, BUY_DIR, x, y, w, h)
+        image = screenshot('combined_binary', 'materialPricePage', (x, y, w, h))
         price = OCR_price(image)
         if price is not None:
             if i == trial - 1:
@@ -320,19 +266,17 @@ def find_buy_state():
     '''
     buy_points = departments_coords['buy_points']
     w, h = departments_coords['buy_size']
-    screenshot = full_screenshot(BUY_DIR, 'binary', 0.01)
+    full_page = screenshot('binary', 'buyState')
     for index, value in enumerate(buy_points):
         x, y = value
-        binary_img = cropImage(screenshot, BUY_DIR, x, y, w, h)
+        binary_img = cropImage(full_page, (x, y, w, h))
         white_pix = np.sum(binary_img == 255)
         white_ratio = white_pix / binary_img.size
-        print(f'buy position {index}: {white_ratio}')
         if white_ratio >= 0.05:
             return index
     return -1
 
 def initalize_preparation():
-    setup_output_directory(BUY_DIR)
     buy_state = find_buy_state()
     if buy_state == -1:
         return True
@@ -342,45 +286,43 @@ def initalize_preparation():
     time.sleep(3)
     price = buy_material()
     if price == -1:
-        print(f'⚠️ Failed to buy material: maximum retry attempts reached ⚠️')
+        print(f'⚠️ Failed to buy material: maximum retry attempts reached')
     elif price == 0:
-        print(f'⚠️ There is trade in only item ⚠️')
+        print(f'⚠️ There is trade in only item')
         keyboard.send('esc')
         time.sleep(1)
     buy_state = find_buy_state()
     return buy_state == -1
 
-def department_status(dep_coords):
+def department_status(dash_img, dep_coords):
     '''
+    return (state, remain time)
     0: not started
     1: in progress
     2: done
     '''
 
     # check 设备处于空闲状态
-    screenshot = full_screenshot(DASH_PAGE_DIR, 'binary', 0.025)
     x, y = dep_coords['free']
     w, h = dep_coords['free_size']
-    center_img = cropImage(screenshot, DASH_PAGE_DIR, x, y, w, h)
+    center_img = cropImage(dash_img, (x, y, w, h))
     if OCR_is_free(center_img):
-        return 0
+        return (0, None)
 
     # read remain time: success -> in progress, fail -> done
     x, y = dep_coords['timmer']
     w, h = dep_coords['timmer_size']
-    timmer_img = cropImage(screenshot, DASH_PAGE_DIR, x, y, w, h)
+    timmer_img = cropImage(dash_img, (x, y, w, h))
     remain_time = OCR_remain_time(timmer_img)
     if remain_time is None:
-        return 2
-    return 1
+        return (2, None)
+    return (1, remain_time)
 
 def match_list_items():
-    gray = full_screenshot(LIST_ITEMS_DIR, 'gray', 0.01)
-    edge = cv2.Canny(gray, 25, 90)
     x, y = departments_coords['list_point']
     w, h = departments_coords['list_size']
-    list_edge_img = cropImage(edge, LIST_ITEMS_DIR, x, y, w, h)
-    list_OCR_img = cropImage(gray, LIST_ITEMS_DIR, x, y, w, h)
+    list_OCR_img = screenshot('gray', 'list', (x, y, w, h))
+    list_edge_img = cv2.Canny(list_OCR_img, 25, 90)
 
     if list_edge_img is None or list_OCR_img is None:
         raise Exception('❗ Error: fail to capture list image ❗')
@@ -392,7 +334,10 @@ def match_list_items():
 
     # find split lines
     lines = cv2.HoughLinesP(list_edge_img, 1, np.pi / 180, threshold=100, minLineLength=minLength, maxLineGap=50)
-    debug_visualize_lines(list_edge_img, lines, LIST_ITEMS_DIR)
+    
+    if debug_mode:
+        debug_visualize_lines(list_edge_img, lines)
+        
     if lines is None:
         raise Exception('❗ Error: no line was found ❗')
     horizontal_lines = []
@@ -411,14 +356,26 @@ def match_list_items():
     raise Exception('❗ Error: cells is empty. Please check images ❗')
 
 def dash_page():
-    setup_output_directory(DASH_PAGE_DIR)
+    setup_output_directory(OUTPUT_DIR)
     status = []
+    dash_img = screenshot('binary', 'department_status')
 
     for dep, coords in departments_coords['dash_page'].items():
-        status.append((dep, department_status(coords)))
-    print(f'dash page: {status}')
+        status.append((dep, department_status(dash_img, coords)))
+        
+    # print result
+    print(f'✅ dash page info:')
+    for dep, info in status:
+        state, time = info
+        if state == 0:
+            print(f'\t{dep}\t not started')
+        elif state == 1:
+            print(f'\t{dep}\t working:\t{time}')
+        else:
+            print(f'\t{dep}\t completed!')
 
     for dep, state in status:
+        state, _ = state
         if state == 2:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
@@ -441,7 +398,6 @@ def list_page_operation(department, category, target):
     x = list_point[0] + int(list_size[0] / 2)
     y_offset = list_point[1]
     last_top_item = None
-    setup_output_directory(LIST_ITEMS_DIR)
 
     for _ in range(100):
         y1 = 20
@@ -451,19 +407,17 @@ def list_page_operation(department, category, target):
         _, score = best_match_item(current_top_item, [last_top_item])
         last_top_item = current_top_item
         if score >= 85:
-            print(f'{department}.{category}.{target} not found')
+            print(f'⚠️ {department}.{category}.{target} not found')
             keyboard.send('esc')
             time.sleep(1)
             return
 
         for i in cells:
             img, y = i
-            # show_image(img)
             text = OCR_item_name(img, department)
             match, score = best_match_item(text, reference)
             if match is None:
                 continue
-            print(f'{text} matches: {match}, {score}')
             if score > 95 and match == target:
                 craft((x, y_offset + y))
                 return
@@ -479,72 +433,14 @@ def main():
         print('🎉 Finished!')
         beep()
         time.sleep(30*60)
-
-def test_screenshot_dxcam():
-    capture_one_screenshot()
-    
-def test_screenshot_win32():
-    img = win32_screenshot()
-    cv2.imshow("win32", img)
-    cv2.waitKey(0)  # 按任意键关闭窗口
-
-def test_list_page():
+        
+def test():
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    setup_output_directory(LIST_ITEMS_DIR)
-    time.sleep(2)
-    match_list_items()
 
-def test_buy_material():
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    setup_output_directory(LIST_ITEMS_DIR)
-    time.sleep(2)
-    find_buy_state()
-    
-
-def capture_one_screenshot(save_path=None, region=None):
-    """
-    用dxcam截取单张屏幕图片并显示
-    :param save_path: 可选保存路径（如 "screenshot.png"）
-    :param region: 可选截图区域 (left, top, width, height)
-    """
-    import dxcam
-    # 初始化dxcam（默认主显示器）
-    camera = dxcam.create()
-    
-    # 单次截图
-    if region:
-        left, top, width, height = region
-        frame = camera.grab(region=(left, top, left+width, top+height))
-    else:
-        frame = camera.grab()  # 全屏截图
-    
-    if frame is not None:
-        # 转换颜色格式（dxcam返回RGB，OpenCV需要BGR）
-        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        
-        # 显示截图
-        cv2.imshow("dxcam", frame_bgr)
-        cv2.waitKey(0)  # 按任意键关闭窗口
-        
-        # 可选保存
-        if save_path:
-            cv2.imwrite(save_path, frame_bgr)
-            print(f"截图已保存到: {save_path}")
-    else:
-        print("截图失败！")
-
-    cv2.destroyAllWindows()
+    time.sleep(3)
+    img = screenshot()
 
 
 if __name__ == "__main__":
-    # main()
-    # test_list_page()
-    # test_buy_material()
-    time.sleep(1)
-    while True:
-        test_screenshot_dxcam()
-        time.sleep(1)
-        test_screenshot_win32()
-        time.sleep(1)
+    main()
