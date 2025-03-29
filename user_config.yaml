@@ -1,11 +1,12 @@
 # 16:9 Only!!!
-
-
+#  HD: 1280 * 720 : 0.666  !!! 目前无法使用，OCR 正确率过低
 # FHD: 1920 * 1080: 1
-# QHD: 2560 * 1440: 1.33
+# QHD: 2560 * 1440: 1.333
 # UHD: 3840 * 2160: 2
+# 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
 SCALE_FACTOR: 2
 
+background_mode: True
 debug_mode: True
 
 tech: 
