@@ -31,8 +31,6 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
 debug_mode = user_config['debug_mode']
 
-_camera = None
-
 # Setup
 def setup_output_directory(output_dir):
     if os.path.exists(output_dir):
@@ -100,26 +98,12 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     return cells
 
 # Screenshot
-def get_camera():
-    global _camera
-    if _camera is None:
-        _camera = dxcam.create()
-        # 注册退出时的清理函数
-        atexit.register(stop_camera)
-    return _camera
-
-def stop_camera():
-    global _camera
-    if _camera is not None:
-        _camera.stop()
-        _camera = None
-
 def screenshot(type = 'binary', hint = 'placeholder', region = None):
     """
     region (x, y, w, h)
     """
     try:
-        camera = get_camera() 
+        camera = dxcam.create()
         if region:
             x, y, w, h = region
             frame = camera.grab(region=(x, y, x+w, y+h))
@@ -204,14 +188,11 @@ def debug_visualize_lines(image, lines):
 
 # OCR
 def OCR_remain_time(image):
-    if image is None:
-        return None
     t_config = r'--psm 7 -c tessedit_char_whitelist=0123456789:'
     text = pytesseract.image_to_string(image, config=t_config)
-    time_pattern = r'\d{2}:\d{2}:\d{2}'
-    match = re.search(time_pattern, text)
-    if match:
-        return match.group()
+    print(text)
+    if text != '':
+        return text
     return None
 
 def OCR_is_free(image):
@@ -260,6 +241,15 @@ def high_beep():
 
 def low_beep():
     winsound.Beep(500, 500)
+    
+def alt_tab():
+    keyboard.press('alt')
+    time.sleep(0.13)
+    keyboard.press('tab')
+    time.sleep(0.1)
+    keyboard.release('tab')
+    time.sleep(0.02)
+    keyboard.release('alt')
 
 def buy_material():
     # purchase page
@@ -330,9 +320,9 @@ def department_status(dash_img, dep_coords):
             return None
         try:
             hh, mm, ss = map(int, time_str.split(':'))
+            return hh * 3600 + mm * 60 + ss
         except:
             return 30*60
-        return hh * 3600 + mm * 60 + ss
     
     # check 设备处于空闲状态
     x, y = dep_coords['free']
@@ -478,7 +468,6 @@ def main():
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     background_mode = user_config['background_mode']
     hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
-    hwnd_desktop = win32gui.FindWindow("Progman", "Program Manager")
     
     while True:
         high_beep()
@@ -493,9 +482,8 @@ def main():
         remain_time += 1*60     # 1 min buffer
         
         if background_mode:
-            win32gui.SetForegroundWindow(hwnd_desktop)
-            time.sleep(3)
-    
+            alt_tab()
+                
         print_restart_info(remain_time)
         low_beep()
         time.sleep(remain_time)
