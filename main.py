@@ -260,16 +260,6 @@ def high_beep():
 
 def low_beep():
     winsound.Beep(500, 500)
-    
-def shortest_time(pairs):
-    def time_to_seconds(time_str):
-        if time_str is None:
-            return None
-        hh, mm, ss = map(int, time_str.split(':'))
-        return hh * 3600 + mm * 60 + ss
-    
-    time_seconds = [time_to_seconds(time) for _, time in pairs if time is not None]
-    return min(time_seconds) if time_seconds else 10*60
 
 def buy_material():
     # purchase page
@@ -331,27 +321,36 @@ def initalize_preparation():
 
 def department_status(dash_img, dep_coords):
     '''
-    return (state, remain time)
-    0: not started
-    1: in progress
-    2: done
+    return remain time in sec
+    -1: done
+    -2: not started
     '''
-
+    def time_to_seconds(time_str):
+        if time_str is None:
+            return None
+        try:
+            hh, mm, ss = map(int, time_str.split(':'))
+        except:
+            return 30*60
+        return hh * 3600 + mm * 60 + ss
+    
     # check 设备处于空闲状态
     x, y = dep_coords['free']
     w, h = dep_coords['free_size']
     center_img = cropImage(dash_img, (x, y, w, h))
     if OCR_is_free(center_img):
-        return (0, None)
+        return -2
 
     # read remain time: success -> in progress, fail -> done
     x, y = dep_coords['timmer']
     w, h = dep_coords['timmer_size']
     timmer_img = cropImage(dash_img, (x, y, w, h))
     remain_time = OCR_remain_time(timmer_img)
+    remain_time = time_to_seconds(remain_time)
+    
     if remain_time is None:
-        return (2, None)
-    return (1, remain_time)
+        return -1
+    return remain_time
 
 def match_list_items():
     x, y = departments_coords['list_point']
@@ -391,36 +390,44 @@ def match_list_items():
     raise Exception('❗ Error: cells is empty. Please check images ❗')
 
 def dash_page():
+    def get_remain_times(dash_img):
+        status = []
+        for dep, coords in departments_coords['dash_page'].items():
+            status.append((dep, department_status(dash_img, coords)))
+        return status
+    
     if debug_mode:
         setup_output_directory(OUTPUT_DIR)
-    status = []
-    dash_img = screenshot('binary', 'department_status')
-
-    for dep, coords in departments_coords['dash_page'].items():
-        status.append((dep, department_status(dash_img, coords)))
         
-    # print result
-    print(f'✅ dash page info:')
-    for dep, info in status:
-        state, remain_time = info
-        if state == 0:
-            print(f'\t{dep}\t not started')
-        elif state == 1:
-            print(f'\t{dep}\t working:\t{remain_time}')
-        else:
-            print(f'\t{dep}\t completed!')
-    for dep, info in status:
-        state, remain_time = info
-        if state == 2:
+    dash_img = screenshot('binary', 'department_status')
+    status = get_remain_times(dash_img)
+        
+    for dep, state in status:
+        if state == -1:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             keyboard.send('space')
             time.sleep(3)
-            state = 0
-        if state == 0:
+            state = -2
+        if state == -2:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
+    
+    status = get_remain_times(dash_img)
+    remain_times = []
+    # print result
+    print(f'✅ dash page info:')
+    for dep, state in status:
+        if state == -2:
+            print(f'\t{dep}\t not started')
+        elif state == -1:
+            print(f'\t{dep}\t completed!')
+        else:
+            remain_times.append(state)
+            print(f'\t{dep}\t working:\t{state // 3600}:{(state % 3600) // 60:02d}:{state % 60:02d}')
+    
+    return remain_times
 
 def list_page(department):
     category, target = user_config[department]
@@ -479,34 +486,19 @@ def main():
         if background_mode:
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
             time.sleep(3)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
-        dash_page()
+        remain_times = dash_page()
         time.sleep(3)
         
-        dash_img = screenshot('binary', 'department_status')
-        dep_status = []
-        for dep, coords in departments_coords['dash_page'].items():
-            dep_status.append(department_status(dash_img, coords))
-        remain_time = shortest_time(dep_status)
+        remain_time = min(remain_times)
         remain_time += 1*60     # 1 min buffer
         
         if background_mode:
             win32gui.SetForegroundWindow(hwnd_desktop)
             time.sleep(3)
-        
+    
         print_restart_info(remain_time)
-
         low_beep()
         time.sleep(remain_time)
-        
-def test():
-    # global departments_coords
-    # departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-
-    # time.sleep(3)
-    # img = screenshot()
-    print(shortest_time([('toenhu','10:20:10'),('th', None), ('the', '00:00:10')]))
-
 
 if __name__ == "__main__":
     main()
-    # test()
