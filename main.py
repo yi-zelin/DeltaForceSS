@@ -10,9 +10,10 @@ import time
 import keyboard
 import winsound
 import hashlib
-import win32gui, win32ui, win32con, win32api
+import win32gui, win32con
 import dxcam
-from PIL import Image
+import atexit
+from datetime import datetime, timedelta
 from rapidfuzz import fuzz
 from datetime import datetime
 
@@ -29,6 +30,8 @@ TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
 debug_mode = user_config['debug_mode']
+
+_camera = None
 
 # Setup
 def setup_output_directory(output_dir):
@@ -97,12 +100,26 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     return cells
 
 # Screenshot
+def get_camera():
+    global _camera
+    if _camera is None:
+        _camera = dxcam.create()
+        # 注册退出时的清理函数
+        atexit.register(stop_camera)
+    return _camera
+
+def stop_camera():
+    global _camera
+    if _camera is not None:
+        _camera.stop()
+        _camera = None
+
 def screenshot(type = 'binary', hint = 'placeholder', region = None):
     """
     region (x, y, w, h)
     """
-    camera = dxcam.create()
     try:
+        camera = get_camera() 
         if region:
             x, y, w, h = region
             frame = camera.grab(region=(x, y, x+w, y+h))
@@ -392,10 +409,8 @@ def dash_page():
             print(f'\t{dep}\t working:\t{remain_time}')
         else:
             print(f'\t{dep}\t completed!')
-    remain_times = []
     for dep, info in status:
         state, remain_time = info
-        remain_times.append(remain_time)
         if state == 2:
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
@@ -442,6 +457,14 @@ def list_page_operation(department, category, target):
                 craft((x, y_offset + y))
                 return
         scroll_down_x4((x, y_offset + y1))
+        
+def print_restart_info(remain_time):
+    restart_time = datetime.now() + timedelta(seconds=remain_time)
+    print(
+        f"🎉 Finished! Restart after: "
+        f"{remain_time // 3600}:{(remain_time % 3600) // 60:02d}:{remain_time % 60:02d}\n"
+        f"⏰ Expected restart at: {restart_time.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
 
 def main():
     global departments_coords
@@ -470,8 +493,8 @@ def main():
             win32gui.SetForegroundWindow(hwnd_desktop)
             time.sleep(3)
         
-        print(f'🎉 Finished! restart after {remain_time // 3600}:{(remain_time % 3600) // 60}:{remain_time % 60}\n')
-        
+        print_restart_info(remain_time)
+
         low_beep()
         time.sleep(remain_time)
         
