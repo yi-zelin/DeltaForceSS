@@ -4,9 +4,9 @@
 # QHD: 2560 * 1440: 1.333
 # UHD: 3840 * 2160: 2
 # 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
-SCALE_FACTOR: 2
+SCALE_FACTOR: 1
 
-background_mode: True
+background_mode: False
 debug_mode: True
 
 tech: 

@@ -472,9 +472,11 @@ def main():
     while True:
         high_beep()
         time.sleep(1)
-        if background_mode:
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            time.sleep(3)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        # if background_mode:
+            # win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            # time.sleep(3)  
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        time.sleep(6)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
         remain_times = dash_page()
         time.sleep(3)
         
