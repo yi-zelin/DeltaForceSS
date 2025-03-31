@@ -10,8 +10,8 @@ background_mode: False
 debug_mode: True
 
 tech: 
-  - guns
-  - M14射手步枪
+  - 枪口
+  - 堡垒水平补偿器
 work:
   - level_4
   - 6.8x51mm FMJ
