@@ -1,6 +1,6 @@
 departments:
   tech:
-    guns:
+    枪:
       - M249轻机枪
       - QJB201轻机枪
       - PKM通用机枪
@@ -18,20 +18,8 @@ departments:
       - 腾龙突击步枪
       - M14射手步枪
       - AK-12突击步枪
-    其他:
-      - OLIGHT WARRIOR 3S 战术手电
-      - OLIGHT Odin S战术手电
-      - 耀斑战术手电
-      - PEQ-2红色激光镭指
-      - LA-3C绿色激光镭指
-      - DBAL-X2紫色激光镭指
-      - PERST-7蓝色激光镭指
-      - OLIGHT Baldr Pro R多功能手电
-      - RK3后握把
-      - 侵袭后握把
-      - 平衡握把底座
-      - 稳固握把底座
     瞄具:
+      # Level 4
       - 先进热融合全息瞄准镜
       - 先进白热成像战斗瞄准镜
       - 蜂网遮光罩
@@ -50,7 +38,22 @@ departments:
       - 1p-29俄制3倍瞄准镜
       - M157火控光学系统
       - 灵眼3/7弹道计算狙击镜
+      # Level 3:
+      - 多用途战术增高架
+      - Cobra准直式瞄准镜
+      - 微型红点瞄准镜
+      - Osight微型瞄准镜
+      - 战斗红点瞄准镜
+      - 全景红点瞄准镜
+      - 微型瞄具增高架
+      - XRO快速反应瞄准镜
+      - okp-7反式瞄准镜
+      - ACOG精准六倍镜
+      - XCOG突击3.5倍瞄准镜
+      # Level 2
+      - 俄式准直二倍瞄准镜
     握把:
+      # Level 4
       - RK-0前握把
       - 战术垂直握把
       - 战术三角握把
@@ -67,7 +70,12 @@ departments:
       - 相位战斗前握把
       - 共振人体工程握把
       - 密令斜角握把
+      - RK3后握把
+      - 侵袭后握把
+      - 平衡握把底座
+      - 稳固握把底座
     枪口:
+      # Level 4
       - 炽火抑制器
       - M7实用消音器
       - 薪火螺旋消焰器
@@ -78,10 +86,30 @@ departments:
       - 先进多口径消音器
       - 钛金竞赛制退器
       - 轻语战术消音器
+    枪托:
+      # level 4
       - MRGS镂空枪托
       - 影袭托芯枪托
       - UR特种战术枪托
       - 影袭导轨枪托
+      # level 3
+      - 骨架狙击枪托
+      - 侵掠核心枪托
+      - 枢机稳固枪托
+      - 416稳固枪托
+      - 闪电导轨枪托
+      - 416轻型枪托
+    战术:
+      # level 4
+      - OLIGHT WARRIOR 3S 战术手电
+      - OLIGHT Odin S战术手电
+      - 耀斑战术手电
+      - PEQ-2红色激光镭指
+      - LA-3C绿色激光镭指
+      - DBAL-X2紫色激光镭指
+      - PERST-7蓝色激光镭指
+      - OLIGHT Baldr Pro R多功能手电
+
   work:
     level_6:
       - 7.62x54R SNB
@@ -118,6 +146,27 @@ departments:
       - .50 AE FMJ
       - .45 ACP AP
       - .357 Magnum FMJ
+    level_3:
+      - 9x39mm SP5
+      - 9x19mm AP6.3
+      - 7.62x54R T46M
+      - 7.62x51mm BPZ
+      - 7.62x39mm PS
+      - 5.8x42mm DVP88
+      - 5.7x28mm L191
+      - 5.56x45mm M855
+      - 5.45x39mm PS
+      - 4.6x30mm Subsonic SX
+      - 12.7x55mm PS12A
+      - 12 Gauge独头 FTX
+      - 12 Gauge 箭形弹
+      - .50 AE JHP
+      - .45 ACP FMJ
+      - .357 Magnum JHP
+      - .357 Magnum 9号霰射"鼠弹"
+      - 9x19mm RIP
+      - 5.7x28mm R37.F
+      - .45 ACP RIP
   medical:
     level_6:
       - 高级护甲维修组合
@@ -157,6 +206,24 @@ departments:
       - D3战术登山包
       - HLS-2重型背包
       - ALS背负系统
+    level_4:
+      - GIR野战胸挂
+      - DRC先进侦察胸挂
+      - 突击者战术背心
+      - 强袭战术背心
+      - MHS 战术头盔
+      - GT1 战术头盔
+      - D6 战术头盔
+      - DICH 训练头盔
+      - MK-2战术背心
+      - DT-AVS防弹衣
+      - 突击手防弹背心
+      - HMP特勤防弹衣
+      - 生存战术背包
+      - GT1户外登山包
+      - D2战术登山包
+      - 野战徒步背包
+      - MAP侦察背包
 
 departments_coords:
   dash_page:
