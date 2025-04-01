@@ -1,0 +1,277 @@
+departments:
+  tech:
+    枪:
+      - M249轻机枪
+      - QJB201轻机枪
+      - PKM通用机枪
+      - M4A1突击步枪
+      - AUG突击步枪
+      - SCAR-H战斗步枪
+      - P90冲锋枪
+      - QCQ171冲锋枪
+      - SR-3M紧凑突击步枪
+      - SKS射手步枪
+      - AKM突击步枪
+      - M700狙击步枪
+      - PSG-1射手步枪
+      - SVD狙击步枪
+      - 腾龙突击步枪
+      - M14射手步枪
+      - AK-12突击步枪
+    瞄具:
+      # Level 4
+      - 先进热融合全息瞄准镜
+      - 先进白热成像战斗瞄准镜
+      - 蜂网遮光罩
+      - LPVO多倍率战斗瞄具
+      - 侧置全景红点瞄准镜
+      - 侧置XRO快速反应瞄准镜
+      - 侧置微型红点瞄准镜
+      - 侧置战斗红点瞄准镜
+      - 侧置Osight微型瞄准镜
+      - HAMR组合瞄准镜
+      - 侦查1.5/5可调瞄准镜
+      - 光学狙击8倍瞄准镜
+      - 3/7可调倍率狙击镜
+      - 6/12神射手变倍狙击镜
+      - 视点3倍瞄准镜
+      - 1p-29俄制3倍瞄准镜
+      - M157火控光学系统
+      - 灵眼3/7弹道计算狙击镜
+      # Level 3:
+      - 多用途战术增高架
+      - Cobra准直式瞄准镜
+      - 微型红点瞄准镜
+      - Osight微型瞄准镜
+      - 战斗红点瞄准镜
+      - 全景红点瞄准镜
+      - 微型瞄具增高架
+      - XRO快速反应瞄准镜
+      - okp-7反式瞄准镜
+      - ACOG精准六倍镜
+      - XCOG突击3.5倍瞄准镜
+      # Level 2
+      - 俄式准直二倍瞄准镜
+    握把:
+      # Level 4
+      - RK-0前握把
+      - 战术垂直握把
+      - 战术三角握把
+      - 斜角阻手器
+      - K1精英斜角握把
+      - 竞赛阻手器
+      - X25U斜侧战斗握把
+      - CR棱镜阻手器
+      - 破晓垂直手电握把
+      - 黎明三角手电握把
+      - 伸缩脚架握把
+      - 共振二代前握把
+      - 幻影垂直握把
+      - 相位战斗前握把
+      - 共振人体工程握把
+      - 密令斜角握把
+      - RK3后握把
+      - 侵袭后握把
+      - 平衡握把底座
+      - 稳固握把底座
+    枪口:
+      # Level 4
+      - 炽火抑制器
+      - M7实用消音器
+      - 薪火螺旋消焰器
+      - 海神消焰器
+      - 死寂消音器
+      - 堡垒水平补偿器
+      - 沙暴垂直补偿器
+      - 先进多口径消音器
+      - 钛金竞赛制退器
+      - 轻语战术消音器
+    枪托:
+      # level 4
+      - MRGS镂空枪托
+      - 影袭托芯枪托
+      - UR特种战术枪托
+      - 影袭导轨枪托
+      # level 3
+      - 骨架狙击枪托
+      - 侵掠核心枪托
+      - 枢机稳固枪托
+      - 416稳固枪托
+      - 闪电导轨枪托
+      - 416轻型枪托
+    战术:
+      # level 4
+      - OLIGHT WARRIOR 3S 战术手电
+      - OLIGHT Odin S战术手电
+      - 耀斑战术手电
+      - PEQ-2红色激光镭指
+      - LA-3C绿色激光镭指
+      - DBAL-X2紫色激光镭指
+      - PERST-7蓝色激光镭指
+      - OLIGHT Baldr Pro R多功能手电
+
+  work:
+    level_6:
+      - 7.62x54R SNB
+      - 7.62x51mm M61
+      - 6.8x51mm AP
+      - .338 Lap Mag AP
+    level_5:
+      - 9x39mm BP
+      - 7.62x54R BT
+      - 7.62x51mm M62
+      - 7.62x39mm AP
+      - 6.8x51mm Hybrid
+      - 5.8x42mm DVC12
+      - 5.7x28mm SS190
+      - 5.56x45mm M995
+      - 5.45x39mm BS
+      - 4.6x30mm AP SX
+      - 12.7x55mm PS12B
+    level_4:
+      - 9x39mm SP6
+      - 9x19mm PBP
+      - 7.62x54R LPS
+      - 7.62x51mm M80
+      - 7.62x39mm BP
+      - 6.8x51mm FMJ
+      - 5.8x42mm DBP10
+      - 5.7x28mm SS193
+      - 5.56x45mm M855A1
+      - 5.45x39mm BT
+      - 4.6x30mm FMJ SX
+      - 12.7x55mm PD12双头弹
+      - 12.7x55mm PS12
+      - 12 Gauge独头 AP-20
+      - .50 AE FMJ
+      - .45 ACP AP
+      - .357 Magnum FMJ
+    level_3:
+      - 9x39mm SP5
+      - 9x19mm AP6.3
+      - 7.62x54R T46M
+      - 7.62x51mm BPZ
+      - 7.62x39mm PS
+      - 5.8x42mm DVP88
+      - 5.7x28mm L191
+      - 5.56x45mm M855
+      - 5.45x39mm PS
+      - 4.6x30mm Subsonic SX
+      - 12.7x55mm PS12A
+      - 12 Gauge独头 FTX
+      - 12 Gauge 箭形弹
+      - .50 AE JHP
+      - .45 ACP FMJ
+      - .357 Magnum JHP
+      - .357 Magnum 9号霰射"鼠弹"
+      - 9x19mm RIP
+      - 5.7x28mm R37.F
+      - .45 ACP RIP
+  medical:
+    level_6:
+      - 高级护甲维修组合
+      - 高级头盔维修组合
+    level_5:
+      - 精密护甲维修组合
+      - 精密头盔维修组合
+      - 战地医疗箱
+    level_3:
+      - 体能激活针
+      - OE2战斗兴奋剂
+      - 感知激活针
+      - M1肌肉强化针
+      - 去甲肾上腺素
+  armor:
+    level_6:
+      - DICH-9重型头盔
+      - GT5指挥官头盔
+      - 泰坦防弹装甲
+      - 金刚防弹衣
+      - 特里克MAS2.0装甲
+      - GTO重型战术背包
+      - D7战术背包
+      - DAR突击手胸挂
+    level_5:
+      - 黑鹰野战胸挂
+      - 飓风战术胸挂
+      - DICH-1战术头盔
+      - GN 重型头盔
+      - H09 防爆头盔
+      - Mask-1铁壁头盔
+      - 重型突击背心
+      - FS复合防弹衣
+      - Hvk-2防弹衣
+      - 精英防弹背心
+      - GT5野战背包
+      - D3战术登山包
+      - HLS-2重型背包
+      - ALS背负系统
+    level_4:
+      - GIR野战胸挂
+      - DRC先进侦察胸挂
+      - 突击者战术背心
+      - 强袭战术背心
+      - MHS 战术头盔
+      - GT1 战术头盔
+      - D6 战术头盔
+      - DICH 训练头盔
+      - MK-2战术背心
+      - DT-AVS防弹衣
+      - 突击手防弹背心
+      - HMP特勤防弹衣
+      - 生存战术背包
+      - GT1户外登山包
+      - D2战术登山包
+      - 野战徒步背包
+      - MAP侦察背包
+
+departments_coords:
+  dash_page:
+    tech:
+      free: [228, 770]
+      free_size: [170,36]
+      timmer: [180, 798]
+      timmer_size: [100, 22]
+
+    work:
+      free: [662, 770]
+      free_size: [170, 36]
+      timmer: [614, 798]
+      timmer_size: [100, 22]
+
+    medical:
+      free: [1090, 770]
+      free_size: [170, 36]
+      timmer: [1046, 798]
+      timmer_size: [100, 22]
+
+    armor:
+      free: [1526, 770]
+      free_size: [170, 36]
+      timmer: [1478, 798]
+      timmer_size: [100, 22]
+
+  standard_screen: [1920, 1080]
+  list_point: [182, 162]
+  list_size: [368, 816]
+  item_size: [368, 84]
+  price_point: [834, 734]
+  price_size: [250, 38]
+
+  buy_points:
+    - [846, 856]
+    - [886, 856]
+  buy_size: [36, 36]
+
+
+  build_position: [1682, 950]
+  buy_positions: 
+    - [866, 874]
+    - [906, 874]
+  price_position: [964, 750]
+
+OCR_configs:
+  tech: --psm 7 -l chi_sim
+  work: --psm 7 -l chi_sim -c tessedit_char_whitelist= 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz双头弹独箭形号霰射鼠
+  medical: --psm 7 -l chi_sim
+  armor: --psm 7 -l chi_sim
