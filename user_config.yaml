@@ -11,14 +11,18 @@ background_mode: False
 debug_mode: True
 
 tech: 
+# 技术中心
   - 枪口
   - 堡垒水平补偿器
 work:
+# 工作台
   - level_4
   - 9x39mm SP6
 medical:
+# 制药台
   - level_3
   - OE2战斗兴奋剂
 armor:
+# 防具台
   - level_5
   - 精英防弹背心
