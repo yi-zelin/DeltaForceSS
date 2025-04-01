@@ -1,0 +1,24 @@
+# 16:9 Only!!!
+#  HD: 1280 * 720 : 0.666  !!! 目前无法使用，OCR 正确率过低
+# FHD: 1920 * 1080: 1
+# QHD: 2560 * 1440: 1.333
+# UHD: 3840 * 2160: 2
+# 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
+SCALE_FACTOR: 2
+TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
+
+background_mode: False
+debug_mode: True
+
+tech: 
+  - 枪口
+  - 堡垒水平补偿器
+work:
+  - level_4
+  - 9x39mm SP6
+medical:
+  - level_3
+  - OE2战斗兴奋剂
+armor:
+  - level_5
+  - 精英防弹背心

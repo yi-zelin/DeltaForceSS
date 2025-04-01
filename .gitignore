@@ -2,4 +2,4 @@ IMG*.png
 log/
 test*.py
 build/
-dist/
+main.spec
