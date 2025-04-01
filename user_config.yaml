@@ -4,7 +4,8 @@
 # QHD: 2560 * 1440: 1.333
 # UHD: 3840 * 2160: 2
 # 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
-SCALE_FACTOR: 1
+SCALE_FACTOR: 2
+TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
 
 background_mode: False
 debug_mode: True
@@ -14,7 +15,7 @@ tech:
   - 堡垒水平补偿器
 work:
   - level_4
-  - 6.8x51mm FMJ
+  - 9x39mm SP6
 medical:
   - level_3
   - OE2战斗兴奋剂

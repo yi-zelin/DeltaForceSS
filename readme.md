@@ -25,9 +25,6 @@
 ## 🙃 已知问题
 > * 后台时间过长可能需要重连网络，不清楚最大间隔时间
 
-# Mar 20, 2025
-使用虚拟环境! python 版本 3.9.21 (不用也行 /doge)
-
 ### Tesseract
 [安装 Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
 
@@ -36,7 +33,3 @@
 ![alt text](.img/image.png)
 
 使用默认安装位置 ("C:\Program Files\Tesseract-OCR")
-
-### requirements
-运行以安装所有需要的库:
-`pip install -r requirements.txt`
