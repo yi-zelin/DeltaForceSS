@@ -433,7 +433,7 @@ def list_page_operation(department, category, target):
         y1 = 20
         cells = match_list_items()
         img, y1 = cells[0]
-        current_top_item = OCR_item_name(img, department).strip()
+        current_top_item = OCR_item_name(img, department)
         _, score = best_match_item(current_top_item, [last_top_item])
         last_top_item = current_top_item
         if score >= 85:
@@ -448,7 +448,7 @@ def list_page_operation(department, category, target):
             match, score = best_match_item(text, reference)
             if match is None:
                 continue
-            if score > 95 and match == target:
+            if score > 80 and match == target:
                 craft((x, y_offset + y))
                 return
         scroll_down_x4((x, y_offset + y1))
