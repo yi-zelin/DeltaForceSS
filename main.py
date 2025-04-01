@@ -12,7 +12,6 @@ import winsound
 import hashlib
 import win32gui, win32con
 import dxcam
-import atexit
 from datetime import datetime, timedelta
 from rapidfuzz import fuzz
 from datetime import datetime
@@ -25,7 +24,7 @@ with open('user_config.yaml', 'r', encoding='utf-8') as fin:
 
 SCALE_FACTOR = user_config['SCALE_FACTOR']
 OUTPUT_DIR = './log'
-TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+TESSERACT_PATH = user_config['TESSERACT_PATH']
 
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
@@ -137,9 +136,9 @@ def screenshot(type = 'binary', hint = 'placeholder', region = None):
                 combined_binary = cv2.bitwise_xor(binary, red_binary)
                 return combined_binary
             else:
-                raise ValueError(f'❗ Error: unsupported image type ❗')
+                raise ValueError(f'! Error: unsupported image type !')
         else:
-            raise Exception(f'❗ Faild: screenshot ❗')
+            raise Exception(f'! Faild: screenshot !')
     finally:
         camera.stop()
         del camera
@@ -190,7 +189,6 @@ def debug_visualize_lines(image, lines):
 def OCR_remain_time(image):
     t_config = r'--psm 7 -c tessedit_char_whitelist=0123456789:'
     text = pytesseract.image_to_string(image, config=t_config)
-    print(text)
     if text != '':
         return text
     return None
@@ -301,9 +299,9 @@ def initalize_preparation():
     time.sleep(3)
     price = buy_material()
     if price == -1:
-        print(f'⚠️ Failed to buy material: maximum retry attempts reached')
+        print(f'! Failed to buy material: maximum retry attempts reached')
     elif price == 0:
-        print(f'⚠️ There is trade in only item')
+        print(f'! There is trade in only item')
         keyboard.send('esc')
         time.sleep(1)
     buy_state = find_buy_state()
@@ -349,7 +347,7 @@ def match_list_items():
     list_edge_img = cv2.Canny(list_OCR_img, 25, 90)
 
     if list_edge_img is None or list_OCR_img is None:
-        raise Exception('❗ Error: fail to capture list image ❗')
+        raise Exception('! Error: fail to capture list image !')
 
     list_size = departments_coords['list_size']
     item_size = departments_coords['item_size']
@@ -363,21 +361,21 @@ def match_list_items():
         debug_visualize_lines(list_edge_img, lines)
         
     if lines is None:
-        raise Exception('❗ Error: no line was found ❗')
+        raise Exception('! Error: no line was found !')
     horizontal_lines = []
     for line in lines:
         x1, y1, x2, y2 = line[0]
         if abs(y2 - y1) < 5:  # k approx 0
             horizontal_lines.append(y1)
     if horizontal_lines is None:
-        raise Exception('❗ Error: no horizontal line was found, check debug image ❗')
+        raise Exception('! Error: no horizontal line was found, check debug image !')
 
     # cut image
     cells = cut_by_lines(list_OCR_img, horizontal_lines, minArea)
 
     if cells:
         return cells
-    raise Exception('❗ Error: cells is empty. Please check images ❗')
+    raise Exception('! Error: cells is empty. Please check images !')
 
 def dash_page():
     def get_remain_times(dash_img):
@@ -407,7 +405,7 @@ def dash_page():
     status = get_remain_times(dash_img)
     remain_times = []
     # print result
-    print(f'✅ dash page info:')
+    print(f'# dash page info:')
     for dep, state in status:
         if state == -2:
             print(f'\t{dep}\t not started')
@@ -439,7 +437,7 @@ def list_page_operation(department, category, target):
         _, score = best_match_item(current_top_item, [last_top_item])
         last_top_item = current_top_item
         if score >= 85:
-            print(f'⚠️ {department}.{category}.{target} not found')
+            print(f'! {department}.{category}.{target} not found')
             keyboard.send('esc')
             time.sleep(1)
             return
@@ -458,9 +456,10 @@ def list_page_operation(department, category, target):
 def print_restart_info(remain_time):
     restart_time = datetime.now() + timedelta(seconds=remain_time)
     print(
-        f"🎉 Finished! Restart after: "
+        f"# Finished! Restart after: "
         f"{remain_time // 3600}:{(remain_time % 3600) // 60:02d}:{remain_time % 60:02d}\n"
-        f"⏰ Expected restart at: {restart_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        f"# Expected restart at: {restart_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        f"###################################\n\n"
     )
 
 def main():
