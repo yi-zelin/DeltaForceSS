@@ -1,5 +1,6 @@
 departments:
   tech:
+  # 技术中心
     枪:
       - M249轻机枪
       - QJB201轻机枪
@@ -111,6 +112,7 @@ departments:
       - OLIGHT Baldr Pro R多功能手电
 
   work:
+  # 工作台
     level_6:
       - 7.62x54R SNB
       - 7.62x51mm M61
@@ -168,6 +170,7 @@ departments:
       - 5.7x28mm R37.F
       - .45 ACP RIP
   medical:
+  # 制药台
     level_6:
       - 高级护甲维修组合
       - 高级头盔维修组合
@@ -182,6 +185,7 @@ departments:
       - M1肌肉强化针
       - 去甲肾上腺素
   armor:
+  # 防具台
     level_6:
       - DICH-9重型头盔
       - GT5指挥官头盔
