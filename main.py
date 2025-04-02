@@ -401,15 +401,17 @@ def dash_page():
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
-    
+            
+    dash_img = screenshot('binary', 'department_status')
     status = get_remain_times(dash_img)
     remain_times = []
-    # print result
     print(f'# dash page info:')
     for dep, state in status:
         if state == -2:
+            remain_times.append(0)
             print(f'\t{dep}\t not started')
         elif state == -1:
+            remain_times.append(0)
             print(f'\t{dep}\t completed!')
         else:
             remain_times.append(state)
@@ -455,12 +457,20 @@ def list_page_operation(department, category, target):
         
 def print_restart_info(remain_time):
     restart_time = datetime.now() + timedelta(seconds=remain_time)
-    print(
-        f"# Finished! Restart after: "
-        f"{remain_time // 3600}:{(remain_time % 3600) // 60:02d}:{remain_time % 60:02d}\n"
-        f"# Expected restart at: {restart_time.strftime('%Y-%m-%d %H:%M:%S')}"
-        f"###################################\n\n"
+    
+    time_str = f"Restart after: {remain_time // 3600}:{(remain_time % 3600) // 60:02d}:{remain_time % 60:02d}"
+    restart_str = f"Restart at: {restart_time.strftime('%H:%M:%S')}"
+    max_length = max(len(time_str), len(restart_str)) + 8
+    border = '#' * max_length
+    
+    output = (
+        f"\n{border}\n"
+        f"#{time_str.center(max_length - 2)}#\n"
+        f"#{restart_str.center(max_length - 2)}#\n"
+        f"{border}\n\n"
     )
+    
+    print(output)
 
 def main():
     global departments_coords

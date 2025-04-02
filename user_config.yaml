@@ -12,8 +12,8 @@ debug_mode: False
 
 tech: 
 # 技术中心
-  - 枪口
-  - 堡垒水平补偿器
+  - 枪
+  - QJB201轻机枪
 work:
 # 工作台
   - level_4
