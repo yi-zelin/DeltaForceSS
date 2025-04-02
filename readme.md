@@ -6,19 +6,20 @@
 业务逻辑大概是：截图 -> OCR 文字识别 -> 模拟鼠标，键盘输入
 
 ## 使用教程
-### 1. 下载并解压dist/main.zip
-    > 包含3个文件:  
-    > **config.yaml**: 数据库  
-    > **user_config.yaml**: 用户配置文件，包含需要制造的物品，屏幕分辨率，OCR软件路径  
-    > **main.exe**: 主程序，需要以管理员方式运行  
+### 1. 下载并解压dist/main.zip  
+包含3个文件:  
+* **config.yaml**: 数据库  
+* **user_config.yaml**: 用户配置文件，包含需要制造的物品，屏幕分辨率，OCR软件路径  
+* **main.exe**: 主程序，需要以管理员方式运行  
+
 ### 2. 安装OCR软件
-   [安装 Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
+[安装 Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
 
-    选择 install for anyone using this computer
+选择 install for anyone using this computer
 
-    ![alt text](.img/image.png)
+![alt text](.img/image.png)
 
-    使用默认安装位置 ("C:\Program Files\Tesseract-OCR")
+使用默认安装位置 ("C:\Program Files\Tesseract-OCR")
 
 ### 3. 配置用户文件
 * **user_config.yaml**:
