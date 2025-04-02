@@ -25,8 +25,8 @@
 * **user_config.yaml**:
     > * `SCALE_FACTOR`: 只与游戏分辨率有关，支持全屏与无边框全屏模式  
     > * `TESSERACT_PATH`: OCR 文件的绝对路径，最后以`\tesseract.exe` 结尾  
-    > * `background_mode`: 一轮运行结束会最小化游戏，长时间后台会导致游戏断开网络连接，所有默认 `False`  
-    > * `debug_mode`: 保留一轮运行中的所有截图在 `../log` 文件夹中  
+    > * `background_mode`: 一轮运行结束会最小化游戏，长时间后台会导致游戏断开网络连接，所以默认 `False`  
+    > * `debug_mode`: 保留一轮运行中的所有截图在 `../log` 文件夹中， 默认`False`就好  
     > * 建造物品，需要从 `config.yaml` 中复制  
     > ```yaml
     >    tech: 
