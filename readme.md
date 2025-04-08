@@ -18,7 +18,7 @@
 * **main.exe**: 主程序, 需要以管理员方式运行  
 
 ### 2. 安装 OCR 软件  
-[安装 Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)  
+[下载 Tesseract](https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe)  
 
 选择 install for anyone using this computer  
 
