@@ -30,8 +30,9 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
 debug_mode = user_config['debug_mode']
 
-current_category = {
+wait_list = {
     # None -> skip this department
+    # [dep, item_name]
         'tech': None,
         'work': None,
         'medical': None,
@@ -55,17 +56,22 @@ def scale_coords(coords):
     else:
         return coords
     
-def define_category(department_name):
-    if not user_config[department_name]:
-        current_category[department_name] = None
-        return
-    target_name = user_config[department_name][0][0]
-    for key, value in config['departments'][department_name].items():
-        for item_name in value:
-            if item_name == target_name:
-                current_category[department_name] = key
-                return
-    raise ValueError(f"Target value '{target_name}' not found in department '{department_name}'.")
+def update_wait_list():
+    def find_match(dep):
+        target_name = user_config[dep][0][0]
+        for key, value in config['departments'][dep].items():
+            for item_name in value:
+                if item_name == target_name:
+                    wait_list[dep] = [key, target_name]
+                    return
+        raise ValueError(f'Incorrect name: {target_name}')
+    
+    for dep in ['tech', 'work', 'medical', 'armor']:
+        if not user_config[dep]:
+            wait_list[dep] = None
+            continue
+        
+        find_match(dep)
         
 def write_user_config(department):
     if not user_config[department]:
@@ -77,8 +83,7 @@ def write_user_config(department):
     if quantity in (0, 1):
         # delete first item
         user_config[department].pop(0)
-        define_category(department)
-    elif quantity > 1 or quantity <= -1:
+    elif quantity > 1:
         first_item[1] -= 1
     
     with open('user_config.yaml', 'w', encoding='utf-8') as file:
@@ -436,6 +441,7 @@ def dash_page():
         
     dash_img = screenshot('binary', 'department_status')
     status = get_remain_times(dash_img)
+    processing_department = []
         
     for dep, state in status:
         if state == -1:
@@ -444,7 +450,8 @@ def dash_page():
             keyboard.send('space')
             time.sleep(3)
             state = -2
-        if state == -2:
+        if state == -2 and wait_list[dep]:
+            processing_department.append(dep)
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
@@ -463,11 +470,13 @@ def dash_page():
         else:
             remain_times.append(state)
             print(f'\t{dep}\t working:\t{state // 3600}:{(state % 3600) // 60:02d}:{state % 60:02d}')
-    
+            if dep in processing_department:
+                write_user_config(dep)
+                
     return remain_times
 
 def list_page(department):
-    category, target = user_config[department]
+    category, target = wait_list[department]
     list_page_operation(department, category, target)
 
 def list_page_operation(department, category, target):
@@ -497,7 +506,7 @@ def list_page_operation(department, category, target):
             match, score = best_match_item(text, reference)
             if match is None:
                 continue
-            if score > 80 and match == target:
+            if score > 87 and match == target:
                 craft((x, y_offset + y))
                 return
         scroll_down_x4((x, y_offset + y1))
@@ -534,6 +543,7 @@ def main():
             # time.sleep(3)  
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
         time.sleep(6)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        update_wait_list()
         remain_times = dash_page()
         time.sleep(3)
         
@@ -548,9 +558,42 @@ def main():
         time.sleep(remain_time)
 
 def test():
-    define_category('tech')
-    write_user_config('tech')
-    print(current_category['tech'])
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    background_mode = user_config['background_mode']
+    hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
+    
+    while True:
+        high_beep()
+        time.sleep(1)
+        if background_mode:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            time.sleep(3)  
+            
+        # win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        time.sleep(3)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        update_wait_list()
+        remain_times = dash_page()
+        time.sleep(3)
+        
+        remain_time = min(remain_times)
+        remain_time += 1*60     # 1 min buffer
+        
+        if background_mode:
+            alt_tab()
+                
+        print_restart_info(remain_time)
+        print(wait_list)
+        low_beep()
+        break
+    
+def test1():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    background_mode = user_config['background_mode']
+    hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
+    update_wait_list()
+    print(wait_list)
 
 if __name__ == "__main__":
     test()
