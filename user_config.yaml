@@ -12,12 +12,12 @@ debug_mode: False
 
 tech: 
 # 技术中心
-  - 枪
-  - QJB201轻机枪
+  - 枪口
+  - 沙暴垂直补偿器
 work:
 # 工作台
   - level_4
-  - 9x39mm SP6
+  - 6.8x51mm FMJ
 medical:
 # 制药台
   - level_3
