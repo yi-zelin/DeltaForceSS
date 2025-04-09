@@ -30,6 +30,14 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
 debug_mode = user_config['debug_mode']
 
+current_category = {
+    # None -> skip this department
+        'tech': None,
+        'work': None,
+        'medical': None,
+        'armor': None
+    }
+
 # Setup
 def setup_output_directory(output_dir):
     if os.path.exists(output_dir):
@@ -46,7 +54,46 @@ def scale_coords(coords):
         return {k: scale_coords(v) for k, v in coords.items()}
     else:
         return coords
-
+    
+def define_category(department_name):
+    if not user_config[department_name]:
+        current_category[department_name] = None
+        return
+    target_name = user_config[department_name][0][0]
+    for key, value in config['departments'][department_name].items():
+        for item_name in value:
+            if item_name == target_name:
+                current_category[department_name] = key
+                return
+    raise ValueError(f"Target value '{target_name}' not found in department '{department_name}'.")
+        
+def write_user_config(department):
+    if not user_config[department]:
+        return
+    first_item = user_config[department][0]
+    print(first_item)
+    _, quantity = first_item
+    
+    if quantity in (0, 1):
+        # delete first item
+        user_config[department].pop(0)
+        define_category(department)
+    elif quantity > 1 or quantity <= -1:
+        first_item[1] -= 1
+    
+    with open('user_config.yaml', 'w', encoding='utf-8') as file:
+        yaml.dump(
+            user_config, 
+            file, 
+            allow_unicode=True, 
+            sort_keys=False,
+            default_flow_style=None,
+            indent=2,
+            width=120,
+            explicit_start=False,
+            explicit_end=False
+        )
+    
 
 # Mouse
 def click_position(position):
@@ -471,6 +518,7 @@ def print_restart_info(remain_time):
     )
     
     print(output)
+    
 
 def main():
     global departments_coords
@@ -499,5 +547,10 @@ def main():
         low_beep()
         time.sleep(remain_time)
 
+def test():
+    define_category('tech')
+    write_user_config('tech')
+    print(current_category['tech'])
+
 if __name__ == "__main__":
-    main()
+    test()
