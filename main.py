@@ -448,9 +448,10 @@ def list_page_operation(department, category, target):
             img, y = i
             text = OCR_item_name(img, department)
             match, score = best_match_item(text, reference)
+            print(f'{text}, {match}, {score}')
             if match is None:
                 continue
-            if score > 80 and match == target:
+            if score > 87 and match == target:
                 craft((x, y_offset + y))
                 return
         scroll_down_x4((x, y_offset + y1))
