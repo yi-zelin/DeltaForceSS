@@ -15,6 +15,8 @@ import dxcam
 from datetime import datetime, timedelta
 from rapidfuzz import fuzz
 from datetime import datetime
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedSeq
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
@@ -74,31 +76,43 @@ def update_wait_list():
         find_match(dep)
         
 def write_user_config(department):
-    if not user_config[department]:
+    # Configure YAML settings
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.preserve_quotes = True
+    yaml.width = 120
+    
+    # Load the existing config with comments
+    with open('user_config.yaml', 'r', encoding='utf-8') as file:
+        user_config = yaml.load(file)
+
+    if not user_config.get(department):
         return
+
     first_item = user_config[department][0]
     print(first_item)
     _, quantity = first_item
     
+    # Modify the quantity
     if quantity in (0, 1):
-        # delete first item
         user_config[department].pop(0)
     elif quantity > 1:
         first_item[1] -= 1
     
-    with open('user_config.yaml', 'w', encoding='utf-8') as file:
-        yaml.dump(
-            user_config, 
-            file, 
-            allow_unicode=True, 
-            sort_keys=False,
-            default_flow_style=None,
-            indent=2,
-            width=120,
-            explicit_start=False,
-            explicit_end=False
-        )
+    # Post-processing to maintain perfect formatting
+    for key in user_config:
+        # Convert empty lists to None to prevent "[]" output
+        if isinstance(user_config[key], list) and not user_config[key]:
+            user_config[key] = None
+        # Ensure flow style for all list items
+        elif isinstance(user_config[key], CommentedSeq):
+            for item in user_config[key]:
+                if isinstance(item, list):
+                    item.fa.set_flow_style()
     
+    # Write back to file
+    with open('user_config.yaml', 'w', encoding='utf-8') as file:
+        yaml.dump(user_config, file)
 
 # Mouse
 def click_position(position):
@@ -137,7 +151,6 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     prev_y = 0
     for y in horizontal_lines:
         if y > prev_y:
-            # TODO: use crop_image()
             cell = list_img[prev_y:y, 0:width]
             # area = # black pixel
             area = cell.size
@@ -538,13 +551,15 @@ def main():
     while True:
         high_beep()
         time.sleep(1)
-        # if background_mode:
-            # win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            # time.sleep(3)  
+        if background_mode:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            time.sleep(3)  
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
         time.sleep(6)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        
         update_wait_list()
         remain_times = dash_page()
+        
         time.sleep(3)
         
         remain_time = min(remain_times)
@@ -586,14 +601,9 @@ def test():
         print(wait_list)
         low_beep()
         break
-    
+
 def test1():
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    background_mode = user_config['background_mode']
-    hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
-    update_wait_list()
-    print(wait_list)
+    write_user_config('work')
 
 if __name__ == "__main__":
-    test()
+    main()
