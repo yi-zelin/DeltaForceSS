@@ -96,6 +96,7 @@ def write_user_config(department):
     # Modify the quantity
     if quantity in (0, 1):
         user_config[department].pop(0)
+
     elif quantity > 1:
         first_item[1] -= 1
     
@@ -556,7 +557,7 @@ def main():
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
             time.sleep(3)  
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        time.sleep(6)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        time.sleep(6)
         
         update_wait_list()
         remain_times = dash_page()
@@ -602,9 +603,6 @@ def test():
         print(wait_list)
         low_beep()
         break
-
-def test1():
-    write_user_config('work')
 
 if __name__ == "__main__":
     main()
