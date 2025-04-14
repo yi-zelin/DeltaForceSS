@@ -628,5 +628,5 @@ def list_OCR_test(department, categories):
     
 
 if __name__ == "__main__":
-    # main()
-    list_OCR_test('armor', ['level_6', 'level_5', 'level_4'])
+    main()
+    # list_OCR_test('armor', ['level_6', 'level_5', 'level_4'])
