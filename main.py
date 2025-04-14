@@ -502,26 +502,32 @@ def list_page_operation(department, category, target):
     last_top_item = None
 
     for _ in range(100):
-        y1 = 20
+        y1 = 2
         cells = match_list_items()
+        # (image, y position)
         img, y1 = cells[0]
+
+        # same top item -> reached bottom
         current_top_item = OCR_item_name(img, department)
         _, score = best_match_item(current_top_item, [last_top_item])
         last_top_item = current_top_item
-        if score >= 85:
+        if score >= 93:
             print(f'! {department}.{category}.{target} not found')
             keyboard.send('esc')
             time.sleep(1)
             return
 
+        # loop list
+        factor = config['OCR_factors'][department]
         for i in cells:
             img, y = i
             text = OCR_item_name(img, department)
             match, score = best_match_item(text, reference)
-            # print(f'{text}, {match}, {score}')
+            if debug_mode:
+                print(f'{text}, {match}, {score}')
             if match is None:
                 continue
-            if score > 87 and match == target:
+            if match == target and score >= factor :
                 craft((x, y_offset + y))
                 return
         scroll_down_x4((x, y_offset + y1))
@@ -574,35 +580,53 @@ def main():
         low_beep()
         time.sleep(remain_time)
 
-def test():
+def list_OCR_test(department, categories):
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    background_mode = user_config['background_mode']
     hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
+    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+    time.sleep(4)
     
-    while True:
-        high_beep()
-        time.sleep(1)
-        if background_mode:
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            time.sleep(3)  
-            
-        # win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        time.sleep(3)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
-        update_wait_list()
-        remain_times = dash_page()
-        time.sleep(3)
-        
-        remain_time = min(remain_times)
-        remain_time += 1*60     # 1 min buffer
-        
-        if background_mode:
-            alt_tab()
+    list_size = departments_coords['list_size']
+    list_point = departments_coords['list_point']
+    x = list_point[0] + int(list_size[0] / 2)
+    y_offset = list_point[1]
+    factor = config['OCR_factors'][department]
+
+    for category in categories:
+        reference = config['departments'][department][category]
+        for target in reference:
+            y1 = 2
+            t = True
+            print(f"#########################: {target}")
+            while t:
+                cells = match_list_items()
+                # (image, y position)
+                img, y1 = cells[0]
                 
-        print_restart_info(remain_time)
-        print(wait_list)
-        low_beep()
-        break
+                # loop list
+                for i in cells:
+                    img, y = i
+                    OCR_text = OCR_item_name(img, department)
+                    match, score = best_match_item(OCR_text, reference)
+                    if match is None:
+                        continue
+                    if match == target and score >= factor :
+                        print(f'!!!! {OCR_text} match: {match} at: {score}')
+                        t = False
+                        pyautogui.scroll(5000)
+                        pyautogui.sleep(0.5)
+                        low_beep()
+                        time.sleep(2)
+                        break
+                    else:
+                        print(f'xxxx {OCR_text} match: {match} at: {score}')
+
+                if t:
+                    scroll_down_x4((x, y_offset + y1))
+    high_beep()
+    
 
 if __name__ == "__main__":
-    main()
+    # main()
+    list_OCR_test('armor', ['level_6', 'level_5', 'level_4'])

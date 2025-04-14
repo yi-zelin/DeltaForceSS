@@ -188,7 +188,7 @@ departments:
   # 防具台
     level_6:
       - DICH-9重型头盔
-      - GT5指挥官头盔
+      - GT5 指挥官头盔
       - 泰坦防弹装甲
       - 金刚防弹衣
       - 特里克MAS2.0装甲
@@ -279,3 +279,9 @@ OCR_configs:
   work: --psm 7 -l chi_sim -c tessedit_char_whitelist= 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz双头弹独箭形号霰射鼠
   medical: --psm 7 -l chi_sim
   armor: --psm 7 -l chi_sim
+
+OCR_factors:
+  tech: 83
+  work: 96.5
+  medical: 80
+  armor: 80
