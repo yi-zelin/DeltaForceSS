@@ -4,25 +4,20 @@
 # QHD: 2560 * 1440: 1.333
 # UHD: 3840 * 2160: 2
 # 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
-SCALE_FACTOR: 2
+SCALE_FACTOR: 1
 TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
+background_mode: false
+debug_mode: false
 
-background_mode: False
-debug_mode: True
-
-tech: 
+tech:
 # 技术中心
-  - 枪口
-  - 堡垒水平补偿器
+  - [沙暴垂直补偿器, -1]
 work:
 # 工作台
-  - level_4
-  - 9x39mm SP6
+  - [9x39mm SP6, -1]
 medical:
 # 制药台
-  - level_3
-  - OE2战斗兴奋剂
+  - [OE2战斗兴奋剂, -1]
 armor:
 # 防具台
-  - level_5
-  - 精英防弹背心
+  - [精英防弹背心, -1]
