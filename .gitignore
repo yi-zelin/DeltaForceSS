@@ -4,3 +4,4 @@ test*.py
 build/
 main.spec
 manifest.xml
+build.spec

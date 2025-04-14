@@ -15,6 +15,8 @@ import dxcam
 from datetime import datetime, timedelta
 from rapidfuzz import fuzz
 from datetime import datetime
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedSeq
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
@@ -29,6 +31,15 @@ TESSERACT_PATH = user_config['TESSERACT_PATH']
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 departments_coords = None
 debug_mode = user_config['debug_mode']
+
+wait_list = {
+    # None -> skip this department
+    # [dep, item_name]
+        'tech': None,
+        'work': None,
+        'medical': None,
+        'armor': None
+    }
 
 # Setup
 def setup_output_directory(output_dir):
@@ -46,7 +57,63 @@ def scale_coords(coords):
         return {k: scale_coords(v) for k, v in coords.items()}
     else:
         return coords
+    
+def update_wait_list():
+    def find_match(dep):
+        target_name = user_config[dep][0][0]
+        for key, value in config['departments'][dep].items():
+            for item_name in value:
+                if item_name == target_name:
+                    wait_list[dep] = [key, target_name]
+                    return
+        raise ValueError(f'Incorrect name: {target_name}')
+    
+    for dep in ['tech', 'work', 'medical', 'armor']:
+        if not user_config[dep]:
+            wait_list[dep] = None
+            continue
+        
+        find_match(dep)
+        
+def write_user_config(department):
+    # Configure YAML settings
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.preserve_quotes = True
+    yaml.width = 120
+    
+    # Load the existing config with comments
+    with open('user_config.yaml', 'r', encoding='utf-8') as file:
+        user_config = yaml.load(file)
 
+    if not user_config.get(department):
+        return
+
+    first_item = user_config[department][0]
+    print(first_item)
+    _, quantity = first_item
+    
+    # Modify the quantity
+    if quantity in (0, 1):
+        user_config[department].pop(0)
+
+    elif quantity > 1:
+        first_item[1] -= 1
+    
+    # Post-processing to maintain perfect formatting
+    for key in user_config:
+        # Convert empty lists to None to prevent "[]" output
+        if isinstance(user_config[key], list) and not user_config[key]:
+            user_config[key] = None
+        # Ensure flow style for all list items
+        elif isinstance(user_config[key], CommentedSeq):
+            for item in user_config[key]:
+                if isinstance(item, list):
+                    item.fa.set_flow_style()
+    
+    # Write back to file
+    with open('user_config.yaml', 'w', encoding='utf-8') as file:
+        yaml.dump(user_config, file)
 
 # Mouse
 def click_position(position):
@@ -85,7 +152,6 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     prev_y = 0
     for y in horizontal_lines:
         if y > prev_y:
-            # TODO: use crop_image()
             cell = list_img[prev_y:y, 0:width]
             # area = # black pixel
             area = cell.size
@@ -389,6 +455,7 @@ def dash_page():
         
     dash_img = screenshot('binary', 'department_status')
     status = get_remain_times(dash_img)
+    processing_department = []
         
     for dep, state in status:
         if state == -1:
@@ -397,7 +464,8 @@ def dash_page():
             keyboard.send('space')
             time.sleep(3)
             state = -2
-        if state == -2:
+        if state == -2 and wait_list[dep]:
+            processing_department.append(dep)
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
@@ -416,11 +484,13 @@ def dash_page():
         else:
             remain_times.append(state)
             print(f'\t{dep}\t working:\t{state // 3600}:{(state % 3600) // 60:02d}:{state % 60:02d}')
-    
+            if dep in processing_department:
+                write_user_config(dep)
+                
     return remain_times
 
 def list_page(department):
-    category, target = user_config[department]
+    category, target = wait_list[department]
     list_page_operation(department, category, target)
 
 def list_page_operation(department, category, target):
@@ -448,7 +518,7 @@ def list_page_operation(department, category, target):
             img, y = i
             text = OCR_item_name(img, department)
             match, score = best_match_item(text, reference)
-            print(f'{text}, {match}, {score}')
+            # print(f'{text}, {match}, {score}')
             if match is None:
                 continue
             if score > 87 and match == target:
@@ -472,6 +542,7 @@ def print_restart_info(remain_time):
     )
     
     print(output)
+    
 
 def main():
     global departments_coords
@@ -482,12 +553,15 @@ def main():
     while True:
         high_beep()
         time.sleep(1)
-        # if background_mode:
-            # win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            # time.sleep(3)  
+        if background_mode:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            time.sleep(3)  
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        time.sleep(6)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        time.sleep(6)
+        
+        update_wait_list()
         remain_times = dash_page()
+        
         time.sleep(3)
         
         remain_time = min(remain_times)
@@ -499,6 +573,36 @@ def main():
         print_restart_info(remain_time)
         low_beep()
         time.sleep(remain_time)
+
+def test():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    background_mode = user_config['background_mode']
+    hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
+    
+    while True:
+        high_beep()
+        time.sleep(1)
+        if background_mode:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            time.sleep(3)  
+            
+        # win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        time.sleep(3)   # 游戏内分辨率跟系统设置分辨率不一样的话用 8
+        update_wait_list()
+        remain_times = dash_page()
+        time.sleep(3)
+        
+        remain_time = min(remain_times)
+        remain_time += 1*60     # 1 min buffer
+        
+        if background_mode:
+            alt_tab()
+                
+        print_restart_info(remain_time)
+        print(wait_list)
+        low_beep()
+        break
 
 if __name__ == "__main__":
     main()
