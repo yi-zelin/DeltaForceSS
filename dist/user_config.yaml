@@ -1,13 +1,9 @@
-# 16:9 Only!!!
-#  HD: 1280 * 720 : 0.666  !!! 目前无法使用，OCR 正确率过低
+# 只支持 16:9!!! 
 # FHD: 1920 * 1080: 1
 # QHD: 2560 * 1440: 1.333
 # UHD: 3840 * 2160: 2
-# 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
+# 只与游戏内设置的分辨率有关
 SCALE_FACTOR: 1
-TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
-background_mode: False
-debug_mode: False
 
 tech:
 # 技术中心
@@ -21,3 +17,8 @@ medical:
 armor:
 # 防具台
   - [精英防弹背心, -1]
+
+# 高级设置
+TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
+background_mode: False
+debug_mode: False
