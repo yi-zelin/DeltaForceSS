@@ -506,19 +506,21 @@ def list_page_operation(department, category, target):
         cells = match_list_items()
         # (image, y position)
         img, y1 = cells[0]
+        factor = config['OCR_factors'][department]
 
         # same top item -> reached bottom
         current_top_item = OCR_item_name(img, department)
-        _, score = best_match_item(current_top_item, [last_top_item])
+        score = 0
+        if last_top_item:
+            score = fuzz.partial_ratio(last_top_item, current_top_item)
         last_top_item = current_top_item
-        if score >= 93:
+        if score >= factor:
             print(f'! {department}.{category}.{target} not found')
             keyboard.send('esc')
             time.sleep(1)
             return
 
         # loop list
-        factor = config['OCR_factors'][department]
         for i in cells:
             img, y = i
             text = OCR_item_name(img, department)
@@ -629,4 +631,4 @@ def list_OCR_test(department, categories):
 
 if __name__ == "__main__":
     main()
-    # list_OCR_test('armor', ['level_6', 'level_5', 'level_4'])
+    # list_OCR_test('tech', ['枪口'])
