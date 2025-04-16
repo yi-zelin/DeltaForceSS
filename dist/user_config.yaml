@@ -6,8 +6,8 @@
 # 只与游戏内设置的分辨率有关，推荐使用屏幕分辨率
 SCALE_FACTOR: 1
 TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
-background_mode: false
-debug_mode: false
+background_mode: False
+debug_mode: False
 
 tech:
 # 技术中心
