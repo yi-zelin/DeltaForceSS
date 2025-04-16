@@ -5,3 +5,4 @@ build/
 main.spec
 manifest.xml
 build.spec
+user_config copy.yaml

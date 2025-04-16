@@ -130,6 +130,7 @@ departments:
       - 5.45x39mm BS
       - 4.6x30mm AP SX
       - 12.7x55mm PS12B
+      - .300 BLK
     level_4:
       - 9x39mm SP6
       - 9x19mm PBP
@@ -144,6 +145,7 @@ departments:
       - 4.6x30mm FMJ SX
       - 12.7x55mm PD12双头弹
       - 12.7x55mm PS12
+      - 12 Gauge 龙息弹
       - 12 Gauge独头 AP-20
       - .50 AE FMJ
       - .45 ACP AP
@@ -187,6 +189,7 @@ departments:
   armor:
   # 防具台
     level_6:
+      - H70 夜视精英头盔
       - DICH-9重型头盔
       - GT5 指挥官头盔
       - 泰坦防弹装甲
@@ -198,6 +201,8 @@ departments:
     level_5:
       - 黑鹰野战胸挂
       - 飓风战术胸挂
+      - GN 重型夜视头盔
+      - GN 久战重型夜视头盔
       - DICH-1战术头盔
       - GN 重型头盔
       - H09 防爆头盔
@@ -232,28 +237,28 @@ departments:
 departments_coords:
   dash_page:
     tech:
-      free: [228, 770]
+      free: [228, 798]
       free_size: [170,36]
-      timmer: [180, 798]
-      timmer_size: [100, 22]
+      timmer: [180, 826]
+      timmer_size: [96, 22]
 
     work:
-      free: [662, 770]
+      free: [662, 798]
       free_size: [170, 36]
-      timmer: [614, 798]
-      timmer_size: [100, 22]
+      timmer: [614, 826]
+      timmer_size: [96, 22]
 
     medical:
-      free: [1090, 770]
+      free: [1090, 798]
       free_size: [170, 36]
-      timmer: [1046, 798]
-      timmer_size: [100, 22]
+      timmer: [1046, 826]
+      timmer_size: [96, 22]
 
     armor:
-      free: [1526, 770]
+      free: [1526, 798]
       free_size: [170, 36]
-      timmer: [1478, 798]
-      timmer_size: [100, 22]
+      timmer: [1478, 826]
+      timmer_size: [96, 22]
 
   standard_screen: [1920, 1080]
   list_point: [182, 162]
@@ -281,7 +286,7 @@ OCR_configs:
   armor: --psm 7 -l chi_sim
 
 OCR_factors:
-  tech: 83
+  tech: 71
   work: 96.5
   medical: 80
   armor: 80
