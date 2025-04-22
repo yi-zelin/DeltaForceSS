@@ -292,7 +292,7 @@ def best_match_item(str1, reference):
     max_score = 0
     best_match = None
     for item in reference:
-        score = fuzz.partial_ratio(str1, item)
+        score = fuzz.ratio(str1, item)
         if score > max_score:
             max_score = score
             best_match = item
@@ -501,7 +501,7 @@ def list_page_operation(department, category, target):
     y_offset = list_point[1]
     last_top_item = None
 
-    for _ in range(100):
+    for k in range(100):
         y1 = 2
         cells = match_list_items()
         # (image, y position)
@@ -511,8 +511,10 @@ def list_page_operation(department, category, target):
         # same top item -> reached bottom
         current_top_item = OCR_item_name(img, department)
         score = 0
+        # TODO: debug line
+        print(f'!!! round: {k}, last: {last_top_item}, current: {current_top_item}')
         if last_top_item:
-            score = fuzz.partial_ratio(last_top_item, current_top_item)
+            score = fuzz.ratio(last_top_item, current_top_item)
         last_top_item = current_top_item
         if score >= factor:
             print(f'! {department}.{category}.{target} not found')
@@ -627,7 +629,13 @@ def list_OCR_test(department, categories):
                 if t:
                     scroll_down_x4((x, y_offset + y1))
     high_beep()
-    
+
+def test1():
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    time.sleep(6)
+    list_page_operation('tech', '战术', '哈哈')
+
 
 if __name__ == "__main__":
     main()
