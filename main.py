@@ -18,6 +18,12 @@ from datetime import datetime
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedSeq
 
+class IncorrectPageError(Exception):
+    def __init__(self, message="未检测到特勤处建造界面"):
+        self.message = message
+        super().__init__(self.message)
+
+
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
 
@@ -287,6 +293,11 @@ def OCR_price(image):
     print(f'✅ OCR price: {price}')
     return int(price)
 
+def is_main_page(image):
+    keywords = ['工作台', '技术中心', '制药台', '防具台']
+    text = pytesseract.image_to_string(image, lang='chi_sim')
+    text = ''.join(text.split())
+    return len([kw for kw in keywords if kw in text]) >= 2
 
 def best_match_item(str1, reference):
     max_score = 0
@@ -454,6 +465,10 @@ def dash_page():
         setup_output_directory(OUTPUT_DIR)
         
     dash_img = screenshot('binary', 'department_status')
+
+    if not is_main_page(dash_img):
+        raise IncorrectPageError()
+
     status = get_remain_times(dash_img)
     processing_department = []
         
@@ -561,28 +576,36 @@ def main():
     hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
     
     while True:
-        high_beep()
-        time.sleep(1)
-        if background_mode:
+        try:
+            high_beep()
+            time.sleep(1)
+            if background_mode:
+                win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                time.sleep(3)  
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            time.sleep(3)  
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        time.sleep(6)
-        
-        update_wait_list()
-        remain_times = dash_page()
-        
-        time.sleep(3)
-        
-        remain_time = min(remain_times)
-        remain_time += 1*60     # 1 min buffer
-        
-        if background_mode:
-            alt_tab()
-                
-        print_restart_info(remain_time)
-        low_beep()
-        time.sleep(remain_time)
+            time.sleep(6)
+            
+            update_wait_list()
+            remain_times = dash_page()
+            
+            time.sleep(3)
+            
+            remain_time = min(remain_times)
+            remain_time += 1*60     # 1 min buffer
+            
+            if background_mode:
+                alt_tab()
+                    
+            print_restart_info(remain_time)
+            low_beep()
+            time.sleep(remain_time)
+        except IncorrectPageError as e:
+            print(f'界面异常: {e}')
+            input('回到特勤处制造界面后, 按 *回车* 键继续...')
+        except Exception as e:
+            input('程序异常, 按 *回车* 键退出')
+            return
+            
 
 def list_OCR_test(department, categories):
     global departments_coords
@@ -629,13 +652,6 @@ def list_OCR_test(department, categories):
                 if t:
                     scroll_down_x4((x, y_offset + y1))
     high_beep()
-
-def test1():
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    time.sleep(6)
-    list_page_operation('tech', '战术', '哈哈')
-
 
 if __name__ == "__main__":
     main()
