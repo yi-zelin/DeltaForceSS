@@ -262,7 +262,7 @@ def OCR_remain_time(image):
     t_config = r'--psm 7 -c tessedit_char_whitelist=0123456789:'
     text = pytesseract.image_to_string(image, config=t_config)
     if text != '':
-        return text
+        return text.strip()
     return None
 
 def OCR_is_free(image):
@@ -282,7 +282,7 @@ def OCR_item_name(image, dep):
 
     # manual improvement
     text = text.replace("番", "盔")
-    return text
+    return text.strip()
 
 def OCR_price(image):
     t_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789,"'
@@ -300,6 +300,7 @@ def is_main_page(image):
     return len([kw for kw in keywords if kw in text]) >= 1
 
 def best_match_item(str1, reference):
+    str1 = str1.strip()
     max_score = 0
     best_match = None
     for item in reference:
@@ -526,8 +527,6 @@ def list_page_operation(department, category, target):
         # same top item -> reached bottom
         current_top_item = OCR_item_name(img, department)
         score = 0
-        # TODO: debug line
-        print(f'!!! round: {k}, last: {last_top_item}, current: {current_top_item}')
         if last_top_item:
             score = fuzz.ratio(last_top_item, current_top_item)
         last_top_item = current_top_item
