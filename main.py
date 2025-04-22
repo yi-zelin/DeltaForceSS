@@ -294,10 +294,10 @@ def OCR_price(image):
     return int(price)
 
 def is_main_page(image):
-    keywords = ['工作台', '技术中心', '制药台', '防具台']
+    keywords = ['生产子弹', '生产药品', '生产枪械', '生产头盔']
     text = pytesseract.image_to_string(image, lang='chi_sim')
     text = ''.join(text.split())
-    return len([kw for kw in keywords if kw in text]) >= 2
+    return len([kw for kw in keywords if kw in text]) >= 1
 
 def best_match_item(str1, reference):
     max_score = 0
@@ -570,6 +570,7 @@ def print_restart_info(remain_time):
     
 
 def main():
+    print('###### 程序初始化 ######')
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     background_mode = user_config['background_mode']
@@ -600,9 +601,11 @@ def main():
             low_beep()
             time.sleep(remain_time)
         except IncorrectPageError as e:
+            low_beep()
             print(f'界面异常: {e}')
-            input('回到特勤处制造界面后, 按 *回车* 键继续...')
+            input('回到特勤处制造界面后, 按 *回车* 键重试...')
         except Exception as e:
+            low_beep()
             input('程序异常, 按 *回车* 键退出')
             return
             
