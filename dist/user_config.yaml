@@ -1,9 +1,7 @@
 # 只支持 16:9!!! 
-# FHD: 1920 * 1080: 1
-# QHD: 2560 * 1440: 1.333
-# UHD: 3840 * 2160: 2
-# 只与游戏内设置的分辨率有关
-SCALE_FACTOR: 1
+# 1920 * 1080
+# 2560 * 1440
+# 3840 * 2160
 
 tech:
 # 技术中心
@@ -19,6 +17,6 @@ armor:
   - [精英防弹背心, -1]
 
 # 高级设置
-TESSERACT_PATH: C:\Program Files\Tesseract-OCR\tesseract.exe
+TESSERACT_PATH: .\Tesseract-OCR\tesseract.exe
 background_mode: False
 debug_mode: False

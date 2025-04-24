@@ -23,6 +23,10 @@ class IncorrectPageError(Exception):
         self.message = message
         super().__init__(self.message)
 
+class IncorrectResolution(Exception):
+    def __init__(self, message="分辨率错误"):
+        self.message = message
+        super().__init__(self.message)
 
 with open('config.yaml', 'r', encoding='utf-8') as fin:
     config = yaml.load(fin, Loader=yaml.FullLoader)
@@ -30,11 +34,12 @@ with open('config.yaml', 'r', encoding='utf-8') as fin:
 with open('user_config.yaml', 'r', encoding='utf-8') as fin:
     user_config = yaml.load(fin, Loader=yaml.FullLoader)
 
-SCALE_FACTOR = user_config['SCALE_FACTOR']
 OUTPUT_DIR = './log'
 TESSERACT_PATH = user_config['TESSERACT_PATH']
 
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+_camera_instance = None
+scale_factor = 1
 departments_coords = None
 debug_mode = user_config['debug_mode']
 
@@ -58,7 +63,7 @@ def scale_coords(coords):
         if all(isinstance(item, (list, tuple)) for item in coords):
             return [scale_coords(item) for item in coords]
         else:
-            return [int(x * SCALE_FACTOR) for x in coords]
+            return [int(x * scale_factor) for x in coords]
     elif isinstance(coords, dict):
         return {k: scale_coords(v) for k, v in coords.items()}
     else:
@@ -121,6 +126,14 @@ def write_user_config(department):
     with open('user_config.yaml', 'w', encoding='utf-8') as file:
         yaml.dump(user_config, file)
 
+valid_resolution = {(1920, 1080), (2560, 1440), (3840, 2160)}
+def set_screen_resolution():
+    width, height = pyautogui.size()
+    if (width, height) not in valid_resolution:
+        raise IncorrectResolution(f'非法分辨率: {width}x{height}, 只支持 {valid_resolution}\n以游戏分辨率为准')
+    global scale_factor
+    scale_factor = width / 1920
+
 # Mouse
 def click_position(position):
     pyautogui.moveTo(position[0], position[1], duration=0.3)
@@ -169,52 +182,54 @@ def cut_by_lines(list_img, horizontal_lines, min_area, prefix='cell'):
     return cells
 
 # Screenshot
+def get_camera():
+    global _camera_instance
+    if _camera_instance is None:
+        _camera_instance = dxcam.create()
+    return _camera_instance
+
 def screenshot(type = 'binary', hint = 'placeholder', region = None):
     """
     region (x, y, w, h)
     """
-    try:
-        camera = dxcam.create()
-        if region:
-            x, y, w, h = region
-            frame = camera.grab(region=(x, y, x+w, y+h))
-        else:
-            frame = camera.grab()
-        
-        if frame is not None:
-            original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
-            _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            
-            if debug_mode:
-                red_channel = original_img[:, :, 2]
-                _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                combined_binary = cv2.bitwise_xor(binary, red_binary)
-                save_image([(original_img, f'{hint}_original', None),
-                            (gray, f'{hint}_gray', None),
-                            (binary, f'{hint}_binary', None),
-                            (combined_binary, f'{hint}_combinedBinary', None)])
-            
-            if type == 'binary':
-                return binary
-            elif type == 'original':
-                return original_img
-            elif type == 'gray':
-                return gray
-            elif type == 'combined_binary':
-                # remove coin icon in front of price
-                red_channel = original_img[:, :, 2]
-                _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-                combined_binary = cv2.bitwise_xor(binary, red_binary)
-                return combined_binary
-            else:
-                raise ValueError(f'! Error: unsupported image type !')
-        else:
-            raise Exception(f'! Faild: screenshot !')
-    finally:
-        camera.stop()
-        del camera
+    camera = get_camera()
+    if region:
+        x, y, w, h = region
+        frame = camera.grab(region=(x, y, x+w, y+h))
+    else:
+        frame = camera.grab()
     
+    if frame is not None:
+        original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        if debug_mode:
+            red_channel = original_img[:, :, 2]
+            _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            combined_binary = cv2.bitwise_xor(binary, red_binary)
+            save_image([(original_img, f'{hint}_original', None),
+                        (gray, f'{hint}_gray', None),
+                        (binary, f'{hint}_binary', None),
+                        (combined_binary, f'{hint}_combinedBinary', None)])
+        
+        if type == 'binary':
+            return binary
+        elif type == 'original':
+            return original_img
+        elif type == 'gray':
+            return gray
+        elif type == 'combined_binary':
+            # remove coin icon in front of price
+            red_channel = original_img[:, :, 2]
+            _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+            combined_binary = cv2.bitwise_xor(binary, red_binary)
+            return combined_binary
+        else:
+            raise ValueError(f'! Error: unsupported image type !')
+    else:
+        raise Exception(f'! Faild: screenshot !')
+
 
 def cropImage(image, region):
     x, y, w, h = region
@@ -570,8 +585,6 @@ def print_restart_info(remain_time):
 
 def main():
     print('###### 程序初始化 ######')
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
     background_mode = user_config['background_mode']
     hwnd = win32gui.FindWindow('UnrealWindow', '三角洲行动  ')
     
@@ -584,7 +597,11 @@ def main():
                 time.sleep(3)  
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
             time.sleep(6)
-            
+
+            set_screen_resolution()
+            global departments_coords
+            departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+
             update_wait_list()
             remain_times = dash_page()
             
@@ -605,6 +622,7 @@ def main():
             input('回到特勤处制造界面后, 按 *回车* 键重试...')
         except Exception as e:
             low_beep()
+            print(e)
             input('程序异常, 按 *回车* 键退出')
             return
             
