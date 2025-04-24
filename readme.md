@@ -29,7 +29,7 @@
 ## 使用教程  
 ### 1. 下载并解压:
 访问 https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2Fyi-zelin%2FDeltaForceSS%2Ftree%2Fmain%2Fdist  
-即: 自动以zip格式下载 `./dest` 中的三个文件
+即: 自动以zip格式下载 `./dest` 中的三个文件 (github 无法上传超过 100M 的文件)
  
 解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
 * **`Tesseract-OCR`**: OCR 程序文件夹
