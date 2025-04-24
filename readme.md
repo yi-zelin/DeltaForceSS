@@ -27,8 +27,11 @@
 业务逻辑大概是: 截图 -> OCR 文字识别 -> 模拟鼠标, 键盘输入  
 
 ## 使用教程  
-### 1. 下载并解压特勤处脚本中的两个压缩文件: `特勤处脚本.zip`, `Tesseract-OCR.zip`  
-将它门放在同一个目录, 即: 包含 3 个文件, 以及 OCR 程序文件夹:  
+### 1. 下载并解压:
+访问 https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2Fyi-zelin%2FDeltaForceSS%2Ftree%2Fmain%2Fdist  
+即: 自动以zip格式下载 `./dest` 中的三个文件
+ 
+解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
 * **`Tesseract-OCR`**: OCR 程序文件夹
 * **`config.yaml`**: 数据库  
 * **`user_config.yaml`**: 用户配置文件, 包含需要制造的物品, 屏幕分辨率, OCR 软件路径  
