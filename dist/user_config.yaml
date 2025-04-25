@@ -18,5 +18,5 @@ armor:
 
 # 高级设置
 TESSERACT_PATH: .\Tesseract-OCR\tesseract.exe
-background_mode: False
-debug_mode: False
+background_mode: false
+debug_mode: false
