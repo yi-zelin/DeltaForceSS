@@ -188,47 +188,58 @@ def get_camera():
         _camera_instance = dxcam.create()
     return _camera_instance
 
-def screenshot(type = 'binary', hint = 'placeholder', region = None):
+def screenshot(type='binary', hint='placeholder', region=None):
     """
     region (x, y, w, h)
     """
     camera = get_camera()
-    if region:
-        x, y, w, h = region
-        frame = camera.grab(region=(x, y, x+w, y+h))
-    else:
-        frame = camera.grab()
-    
-    if frame is not None:
-        original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        if debug_mode:
-            red_channel = original_img[:, :, 2]
-            _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            combined_binary = cv2.bitwise_xor(binary, red_binary)
-            save_image([(original_img, f'{hint}_original', None),
-                        (gray, f'{hint}_gray', None),
-                        (binary, f'{hint}_binary', None),
-                        (combined_binary, f'{hint}_combinedBinary', None)])
-        
-        if type == 'binary':
-            return binary
-        elif type == 'original':
-            return original_img
-        elif type == 'gray':
-            return gray
-        elif type == 'combined_binary':
-            # remove coin icon in front of price
-            red_channel = original_img[:, :, 2]
-            _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
-            combined_binary = cv2.bitwise_xor(binary, red_binary)
-            return combined_binary
+    frame = None
+    max_retries = 3
+    attempts = 0
+
+    while attempts < max_retries:
+        if region:
+            x, y, w, h = region
+            frame = camera.grab(region=(x, y, x+w, y+h))
         else:
-            raise ValueError(f'! Error: unsupported image type !')
+            frame = camera.grab()
+
+        if frame is not None:
+            break
+        attempts += 1
+
+    if frame is None:
+        raise Exception(f'! Failed: screenshot after {max_retries} attempts !')
+
+    original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    if debug_mode:
+        red_channel = original_img[:, :, 2]
+        _, red_binary = cv2.threshold(red_channel, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        combined_binary = cv2.bitwise_xor(binary, red_binary)
+        save_image([
+            (original_img, f'{hint}_original', None),
+            (gray, f'{hint}_gray', None),
+            (binary, f'{hint}_binary', None),
+            (combined_binary, f'{hint}_combinedBinary', None)
+        ])
+
+    if type == 'binary':
+        return binary
+    elif type == 'original':
+        return original_img
+    elif type == 'gray':
+        return gray
+    elif type == 'combined_binary':
+        red_channel = original_img[:, :, 2]
+        _, red_binary = cv2.threshold(red_channel, 128, 255, cv2.THRESH_BINARY)
+        combined_binary = cv2.bitwise_xor(binary, red_binary)
+        return combined_binary
     else:
-        raise Exception(f'! Faild: screenshot !')
+        raise ValueError('! Error: unsupported image type !')
+
 
 
 def cropImage(image, region):
