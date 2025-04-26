@@ -323,6 +323,8 @@ def is_main_page(image):
     keywords = ['生产子弹', '生产药品', '生产枪械', '生产头盔']
     text = pytesseract.image_to_string(image, lang='chi_sim')
     text = ''.join(text.split())
+    if debug_mode:
+        print(f'check main page: {text}')
     return len([kw for kw in keywords if kw in text]) >= 1
 
 def best_match_item(str1, reference):
@@ -493,8 +495,8 @@ def dash_page():
         
     dash_img = screenshot('binary', 'department_status')
 
-    if not is_main_page(dash_img):
-        raise IncorrectPageError()
+    # if not is_main_page(dash_img):
+    #     raise IncorrectPageError()
 
     status = get_remain_times(dash_img)
     processing_department = []
