@@ -132,6 +132,7 @@ def set_screen_resolution():
     if (width, height) not in valid_resolution:
         raise IncorrectResolution(f'非法分辨率: {width}x{height}, 只支持 {valid_resolution}\n以游戏分辨率为准')
     global scale_factor
+    print(width, height)
     scale_factor = width / 1920
 
 # Mouse
@@ -319,13 +320,14 @@ def OCR_price(image):
     print(f'✅ OCR price: {price}')
     return int(price)
 
-def is_main_page(image):
-    keywords = ['生产子弹', '生产药品', '生产枪械', '生产头盔']
-    text = pytesseract.image_to_string(image, lang='chi_sim')
-    text = ''.join(text.split())
-    if debug_mode:
-        print(f'check main page: {text}')
-    return len([kw for kw in keywords if kw in text]) >= 1
+def is_main_page():
+    for i in range(2):
+        image = screenshot('binary', 'main_page', departments_coords['tech_dep_region'])
+        t_config = r'-l chi_sim --psm 7'
+        text = pytesseract.image_to_string(image, config=t_config)
+        if '技术中心' in text:
+            return True
+    return False
 
 def best_match_item(str1, reference):
     str1 = str1.strip()
@@ -492,11 +494,11 @@ def dash_page():
     
     if debug_mode:
         setup_output_directory(OUTPUT_DIR)
+
+    if not is_main_page():
+        raise IncorrectPageError()
         
     dash_img = screenshot('binary', 'department_status')
-
-    # if not is_main_page(dash_img):
-    #     raise IncorrectPageError()
 
     status = get_remain_times(dash_img)
     processing_department = []
@@ -686,6 +688,13 @@ def list_OCR_test(department, categories):
                     scroll_down_x4((x, y_offset + y1))
     high_beep()
 
+def test1():
+    time.sleep(4)
+    set_screen_resolution()
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    time.sleep(5)
+    print(is_main_page())
+
 if __name__ == "__main__":
     main()
-    # list_OCR_test('tech', ['枪口'])
