@@ -279,6 +279,8 @@ departments_coords:
     - [906, 874]
   price_position: [964, 750]
 
+  tech_dep_region: [232, 456, 156, 54]
+
 OCR_configs:
   tech: --psm 7 -l chi_sim
   work: --psm 7 -l chi_sim -c tessedit_char_whitelist= 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz双头弹独箭形号霰射鼠
