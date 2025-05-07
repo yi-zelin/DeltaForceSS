@@ -215,7 +215,6 @@ def screenshot(type='binary', hint='placeholder', region=None):
     original_img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
     otsu_thresh, _ = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    print("Otsu 自动阈值为：", otsu_thresh)
 
     min_thresh = 50
     final_thresh = max(otsu_thresh, min_thresh)
