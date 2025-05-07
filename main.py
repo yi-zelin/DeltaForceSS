@@ -518,6 +518,7 @@ def dash_page():
             state = -2
         if state == -2 and wait_list[dep]:
             processing_department.append(dep)
+            write_user_config(dep)
             click_position(departments_coords['dash_page'][dep]['free'])
             time.sleep(3)
             list_page(dep)
@@ -536,8 +537,6 @@ def dash_page():
         else:
             remain_times.append(state)
             print(f'\t{dep}\t working:\t{state // 3600}:{(state % 3600) // 60:02d}:{state % 60:02d}')
-            if dep in processing_department:
-                write_user_config(dep)
                 
     return remain_times
 
