@@ -14,7 +14,7 @@
 
 ## 使用教程  
 ### 1. 下载并解压:
-下载: [https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0) 中的 `main_v*.zip`  
+下载: [v1.0.0](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0) 中的 `main_v*.zip`  
 **解压到纯英文路径!!! (Tesseract 用的 C/C++ 接口, 仅支持 ASCII)**  
 
 > 解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
