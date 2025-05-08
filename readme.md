@@ -1,30 +1,6 @@
 ## ✔ 更新
 点个星吧, 谢谢!  
-应该不会再有功能性更新了
-* 5 月 7 日
-  * 修复购买数量多一个的 bug
-  * 添加集成 Tesseract
-* 5 月 5 日
-  * 有时购买后程序出错的 bug
-* 5 月 4 日
-  * 添加特勤处页面检测
-* 4 月 24 日
-  * 取消特勤处页面检测 有bug
-* 4 月 23 日
-  * 自动识别分辨率 (16:9, 以游戏分辨率为准)
-  * 集成 Tesseract
-  * 更好的 `dxcam` 逻辑
-* 4 月 22 日
-  * 特勤处页面检测 (不在特勤处时程序自动暂停)
-  * 不自动退出, 以更好查看程序状态
-  * 快捷键重启
-* 4 月 17 日 ❗ 新赛季更新 (必要! 老版本会不断重复运行)
-  * 匹配新赛季UI
-  * bug 修复
-  * .300 BLK 子弹需要在游戏中添加置顶, 因为三种子弹名字都一样
-* 4 月 13 日
-  * 按照列表进行生产 [需要更改`user_config`](#3-配置用户文件-user_configyaml)
-  * 更好的 OCR 阈值 (识别错误概率更低)
+应该不会再有功能性更新了, 最新版本 v1.0.0
 
 ## 免责声明
 本项目仅为 **技术学习与交流** 目的开发，**并非游戏外挂或作弊工具**。严禁用于商业牟利或其他违反游戏服务条款的行为。
@@ -38,14 +14,13 @@
 
 ## 使用教程  
 ### 1. 下载并解压:
-访问 https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2Fyi-zelin%2FDeltaForceSS%2Ftree%2Fmain%2Fdist  
-即: 自动以zip格式下载 `./dest` 中的三个文件 (需要等待一会, github 无法上传超过 100M 的文件)
+下载: [https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0) 中的 `main_v*.zip`
  
 解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
 * **`Tesseract-OCR`**: OCR 程序文件夹
 * **`config.yaml`**: 数据库  
 * **`user_config.yaml`**: 用户配置文件, 包含需要制造的物品, 屏幕分辨率, OCR 软件路径  
-* **`main.exe`**: 主程序, 需要以管理员方式运行  
+* **`特勤处脚本.exe`**: 主程序, 需要以管理员方式运行  
 
 ### 2. 配置用户文件 `user_config.yaml` 
 * `tech`, `work` ...: 需要建造的物品, 最好从 `config.yaml` 中复制  
