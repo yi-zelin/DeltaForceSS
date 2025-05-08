@@ -14,13 +14,14 @@
 
 ## 使用教程  
 ### 1. 下载并解压:
-下载: [https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0) 中的 `main_v*.zip`
- 
-解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
-* **`Tesseract-OCR`**: OCR 程序文件夹
-* **`config.yaml`**: 数据库  
-* **`user_config.yaml`**: 用户配置文件, 包含需要制造的物品, 屏幕分辨率, OCR 软件路径  
-* **`特勤处脚本.exe`**: 主程序, 需要以管理员方式运行  
+下载: [https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.0) 中的 `main_v*.zip`  
+**解压到纯英文路径!!! (Tesseract 用的 C/C++ 接口, 仅支持 ASCII)**  
+
+> 解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
+> * **`Tesseract-OCR`**: OCR 程序文件夹
+> * **`config.yaml`**: 数据库  
+> * **`user_config.yaml`**: 用户配置文件, 包含需要制造的物品等信息
+> * **`特勤处脚本.exe`**: 主程序, 需要以管理员方式运行  
 
 ### 2. 配置用户文件 `user_config.yaml` 
 * `tech`, `work` ...: 需要建造的物品, 最好从 `config.yaml` 中复制  
@@ -29,7 +30,6 @@
   > 高级设置 (建议保持默认)
   > * `TESSERACT_PATH`: OCR 文件路径
   > * `background_mode`: 一轮运行结束会最小化游戏, 长时间后台会导致游戏断开网络连接, 所以默认 `False`  
-  >
   > * `debug_mode`: 保留一轮运行中的所有截图在 `./log` 文件夹中, 默认 `False` 就好  
 
 
@@ -43,9 +43,9 @@
 * 只支持 16:9 的分辨率设置
 * 不在正确的页面会自动停止程序, 即:在游戏中程序会自动停止
 * .300 BLK 需要手动置顶, 因为三种子弹名字都一样  
-* 程序睡眠期间可以更改 `user_config`, 每次唤醒都会自动重新读取它
+* 更改 `user_config` 请重启程序
 * OCR 匹配失败会在 1 分钟之后重启程序, 如果多次读取失败考虑使用更高的分辨率
-* 2070super 在1080p, 游戏外30帧, 关闭帧生成, 最低风扇速度时温度可以控制在35度
+* 2070super 在2k分辨率, 游戏外30帧, 关闭帧生成, 最低风扇速度时温度可以控制在35度
 
 # 📃 项目信息 
 

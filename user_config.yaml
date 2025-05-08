@@ -8,7 +8,7 @@ tech:
   - [沙暴垂直补偿器, -1]
 work:
 # 工作台
-  - [9x39mm SP6, -1]
+  - [9x39mm BP, -1]
 medical:
 # 制药台
   - [OE2战斗兴奋剂, -1]
@@ -18,5 +18,5 @@ armor:
 
 # 高级设置
 TESSERACT_PATH: .\Tesseract-OCR\tesseract.exe
-background_mode: False
-debug_mode: False
+background_mode: false
+debug_mode: false
