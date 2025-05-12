@@ -528,7 +528,8 @@ def dash_page():
     print(f'# dash page info:')
     for dep, state in status:
         if state == -2:
-            remain_times.append(0)
+            if wait_list[dep]:
+                remain_times.append(0)
             print(f'\t{dep}\t not started')
         elif state == -1:
             remain_times.append(0)
