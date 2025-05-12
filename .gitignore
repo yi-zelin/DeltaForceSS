@@ -8,3 +8,4 @@ build.spec
 build.bat
 user_config copy.yaml
 /Tesseract-OCR
+/dist
