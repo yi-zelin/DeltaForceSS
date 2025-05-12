@@ -17,6 +17,6 @@ armor:
   - [精英防弹背心, -1]
 
 # 高级设置
-TESSERACT_PATH: .dist\Tesseract-OCR\tesseract.exe
+TESSERACT_PATH: .\dist\Tesseract-OCR\tesseract.exe
 background_mode: false
 debug_mode: false
