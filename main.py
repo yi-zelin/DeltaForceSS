@@ -218,6 +218,8 @@ def screenshot(type='binary', hint='placeholder', region=None):
 
     min_thresh = 50
     final_thresh = max(otsu_thresh, min_thresh)
+    if not region:
+        final_thresh -= 10
 
     _, binary = cv2.threshold(gray, final_thresh, 255, cv2.THRESH_BINARY)
 
@@ -301,11 +303,9 @@ def OCR_is_free(image):
     '''
     return match score > 50
     '''
-    t_config = r'-l chi_sim --psm 7'
+    t_config = r'-l chi_sim'
     text = pytesseract.image_to_string(image, config=t_config)
-    _, match_score = best_match_item(text, ['设备处于空闲状态'])
-    if match_score is None:
-        return False
+    match_score = fuzz.partial_ratio(text, '设备处于空闲状态')
     return match_score > 50
 
 def OCR_item_name(image, dep):
@@ -694,12 +694,26 @@ def list_OCR_test(department, categories):
     high_beep()
 
 def test1():
-    time.sleep(4)
-    set_screen_resolution()
-    global departments_coords
-    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    time.sleep(5)
-    print(is_main_page())
+    def callback(hwnd, extra):
+        if win32gui.IsWindowVisible(hwnd):
+            title = win32gui.GetWindowText(hwnd)
+            class_name = win32gui.GetClassName(hwnd)
+            if title:  # Only show windows with titles
+                print(f"HWND: {hwnd}, Class Name: {class_name}, Title: {title}")
+
+    win32gui.EnumWindows(callback, None)
+
+def test2():
+    from PIL import Image
+    image_path = "./log/21_58_27_869_cropped_1090,798,170,36.png"
+    image = Image.open(image_path)
+
+    # 识别配置：中文简体（chi_sim），单行模式（--psm 7）
+    t_config = r'--psm 7 -l chi_sim'
+    text = pytesseract.image_to_string(image, config='-l chi_sim')
+
+    print("识别结果：", text.strip())
 
 if __name__ == "__main__":
     main()
+    # test2()
