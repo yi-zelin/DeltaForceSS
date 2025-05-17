@@ -1,6 +1,6 @@
 ## ✔ 更新
 点个星吧, 谢谢!  
-应该不会再有功能性更新了, 最新版本 v1.0.1
+应该不会再有功能性更新了, 最新版本 v1.0.2
 
 ## 免责声明
 本项目仅为 **技术学习与交流** 目的开发，**并非游戏外挂或作弊工具**。严禁用于商业牟利或其他违反游戏服务条款的行为。
@@ -14,7 +14,7 @@
 
 ## 使用教程  
 ### 1. 下载并解压:
-下载: [v1.0.1](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.1) 中的 `dist.zip`  
+下载: [v1.0.2](https://github.com/yi-zelin/DeltaForceSS/releases/tag/v1.0.2) 中的 `dist.zip`  
 **解压到纯英文路径!!! (Tesseract 用的 C/C++ 接口, 仅支持 ASCII)**  
 
 > 解压后得到: 3 个文件, 以及 OCR 程序文件夹:  
