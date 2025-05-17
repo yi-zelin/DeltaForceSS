@@ -314,6 +314,8 @@ def OCR_item_name(image, dep):
 
     # manual improvement
     text = text.replace("番", "盔")
+    if debug_mode:
+        print(f"List Item OCR: {text}")
     return text.strip()
 
 def OCR_price(image):

@@ -262,7 +262,7 @@ departments_coords:
 
   standard_screen: [1920, 1080]
   list_point: [182, 162]
-  list_size: [368, 816]
+  list_size: [348, 816]
   item_size: [368, 84]
   price_point: [834, 734]
   price_size: [250, 38]
