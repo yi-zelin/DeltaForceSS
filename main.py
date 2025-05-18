@@ -552,7 +552,7 @@ def list_page_operation(department, category, target):
     list_point = departments_coords['list_point']
     x = list_point[0] + int(list_size[0] / 2)
     y_offset = list_point[1]
-    last_top_item = None
+    last_top_item = ''
 
     for k in range(100):
         y1 = 2
@@ -566,12 +566,17 @@ def list_page_operation(department, category, target):
         score = 0
         if last_top_item:
             score = fuzz.ratio(last_top_item, current_top_item)
-        last_top_item = current_top_item
-        if score >= factor:
+            
+        specialcase = '侧置' in last_top_item
+
+        if score >= factor and not specialcase:
             print(f'! {department}.{category}.{target} not found')
+            print(f'with: last: {last_top_item}, current: {current_top_item}, score: {score}')
             keyboard.send('esc')
-            time.sleep(1)
+            # time.sleep(1)
             return
+
+        last_top_item = current_top_item
 
         # loop list
         for i in cells:
@@ -706,16 +711,13 @@ def test1():
     win32gui.EnumWindows(callback, None)
 
 def test2():
-    from PIL import Image
-    image_path = "./log/21_58_27_869_cropped_1090,798,170,36.png"
-    image = Image.open(image_path)
+    time.sleep(2)
+    high_beep()
+    set_screen_resolution()
+    global departments_coords
+    departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
 
-    # 识别配置：中文简体（chi_sim），单行模式（--psm 7）
-    t_config = r'--psm 7 -l chi_sim'
-    text = pytesseract.image_to_string(image, config='-l chi_sim')
-
-    print("识别结果：", text.strip())
+    list_page_operation('tech', '战术', 'PERST-7蓝色激光镭指')
 
 if __name__ == "__main__":
     main()
-    # test2()
