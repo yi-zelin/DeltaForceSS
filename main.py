@@ -79,6 +79,9 @@ def update_wait_list():
                     return
         raise ValueError(f'Incorrect name: {target_name}')
     
+    with open('user_config.yaml', 'r', encoding='utf-8') as fin:
+        user_config = yaml.load(fin, Loader=yaml.FullLoader)
+    
     for dep in ['tech', 'work', 'medical', 'armor']:
         if not user_config[dep]:
             wait_list[dep] = None
@@ -631,6 +634,7 @@ def main():
 
             update_wait_list()
             remain_times = dash_page()
+            update_wait_list()
             
             time.sleep(3)
             
@@ -711,13 +715,16 @@ def test1():
     win32gui.EnumWindows(callback, None)
 
 def test2():
-    time.sleep(2)
-    high_beep()
     set_screen_resolution()
+    update_wait_list()
+    print(wait_list)
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
+    write_user_config('armor')
+    update_wait_list()
+    print(wait_list)
 
-    list_page_operation('tech', '战术', 'PERST-7蓝色激光镭指')
 
 if __name__ == "__main__":
     main()
+    # test2()
