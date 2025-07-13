@@ -288,6 +288,8 @@ def debug_visualize_lines(image, lines):
     for line in lines:
         x1, y1, x2, y2 = line[0]
         cv2.line(image_with_lines, (x1, y1), (x2, y2), (0, 255, 0), 1)  # green line thickness = 1 px
+        
+    # show_image(image_with_lines)
     
     # Generate unique hash from image data
     image_hash = hashlib.md5(image_with_lines.tobytes()).hexdigest()[:8]
@@ -308,8 +310,8 @@ def OCR_is_free(image):
     '''
     t_config = r'-l chi_sim'
     text = pytesseract.image_to_string(image, config=t_config)
-    match_score = fuzz.partial_ratio(text, '设备处于空闲状态')
-    return match_score > 50
+    match_score = fuzz.partial_ratio(text, '空闲中')
+    return match_score > 60
 
 def OCR_item_name(image, dep):
     OCR_config = config['OCR_configs'][dep]
@@ -462,7 +464,7 @@ def match_list_items():
     x, y = departments_coords['list_point']
     w, h = departments_coords['list_size']
     list_OCR_img = screenshot('gray', 'list', (x, y, w, h))
-    list_edge_img = cv2.Canny(list_OCR_img, 25, 90)
+    list_edge_img = cv2.Canny(list_OCR_img, 10, 40)
 
     if list_edge_img is None or list_OCR_img is None:
         raise Exception('! Error: fail to capture list image !')
@@ -556,6 +558,8 @@ def list_page_operation(department, category, target):
     x = list_point[0] + int(list_size[0] / 2)
     y_offset = list_point[1]
     last_top_item = ''
+    black_spot = departments_coords['list_black_spot']
+    pyautogui.moveTo(black_spot[0], black_spot[1], duration=0.3)
 
     for k in range(100):
         y1 = 2
@@ -593,7 +597,7 @@ def list_page_operation(department, category, target):
             if match == target and score >= factor :
                 craft((x, y_offset + y))
                 return
-        scroll_down_x4((x, y_offset + y1))
+        scroll_down_x4(black_spot)
         
 def print_restart_info(remain_time):
     restart_time = datetime.now() + timedelta(seconds=remain_time)
@@ -701,7 +705,7 @@ def list_OCR_test(department, categories):
                         print(f'xxxx {OCR_text} match: {match} at: {score}')
 
                 if t:
-                    scroll_down_x4((x, y_offset + y1))
+                    scroll_down_x4(config['departments_coords']['list_black_spot'])
     high_beep()
 
 def test1():
@@ -720,11 +724,11 @@ def test2():
     print(wait_list)
     global departments_coords
     departments_coords = {k: scale_coords(v) for k, v in config['departments_coords'].items()}
-    write_user_config('armor')
+    write_user_config('tech')
     update_wait_list()
     print(wait_list)
 
 
 if __name__ == "__main__":
     main()
-    # test2()
+    # list_OCR_test('tech',['握把'])

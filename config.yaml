@@ -102,7 +102,7 @@ departments:
       - 416轻型枪托
     战术:
       # level 4
-      - OLIGHT WARRIOR 3S 战术手电
+      - OLIGHT WARRIOR 3S战术手电
       - OLIGHT Odin S战术手电
       - 耀斑战术手电
       - PEQ-2红色激光镭指
@@ -119,6 +119,7 @@ departments:
       - 6.8x51mm AP
       - .338 Lap Mag AP
     level_5:
+      - 碳纤维穿甲箭矢
       - 9x39mm BP
       - 7.62x54R BT
       - 7.62x51mm M62
@@ -132,6 +133,7 @@ departments:
       - 12.7x55mm PS12B
       - .300 BLK
     level_4:
+      - 碳纤维刺骨箭矢
       - 9x39mm SP6
       - 9x19mm PBP
       - 7.62x54R LPS
@@ -151,6 +153,7 @@ departments:
       - .45 ACP AP
       - .357 Magnum FMJ
     level_3:
+      - 玻纤柳叶箭矢
       - 9x39mm SP5
       - 9x19mm AP6.3
       - 7.62x54R T46M
@@ -237,30 +240,31 @@ departments:
 departments_coords:
   dash_page:
     tech:
-      free: [228, 798]
-      free_size: [170,36]
+      free: [276, 790]
+      free_size: [80,36]
       timmer: [180, 826]
       timmer_size: [96, 22]
 
     work:
-      free: [662, 798]
-      free_size: [170, 36]
+      free: [710, 790]
+      free_size: [80,36]
       timmer: [614, 826]
       timmer_size: [96, 22]
 
     medical:
-      free: [1090, 798]
-      free_size: [170, 36]
+      free: [1136, 790]
+      free_size: [80,36]
       timmer: [1046, 826]
       timmer_size: [96, 22]
 
     armor:
-      free: [1526, 798]
-      free_size: [170, 36]
+      free: [1566, 790]
+      free_size: [80,36]
       timmer: [1478, 826]
       timmer_size: [96, 22]
 
   standard_screen: [1920, 1080]
+  list_black_spot: [110, 540]
   list_point: [182, 162]
   list_size: [348, 816]
   item_size: [368, 84]
