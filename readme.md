@@ -1,3 +1,5 @@
+## 🌐 [English README](README.en.md)
+
 ## ✔ 更新
 点个星吧, 谢谢!  
 应该不会再有功能性更新了  
