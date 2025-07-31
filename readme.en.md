@@ -26,7 +26,7 @@ Go to https://github.com/yi-zelin/DeltaForceSS/releases and download the latest 
 
 ### 2. Configure `user_config.yaml`  
 * `tech`, `work`, etc.: Items to be manufactured, preferably copy from `config.yaml`  
-![alt text](.img/image1.png)
+![alt text](.img/image1.en.png)
 
   > Advanced Settings (recommended to keep default):  
   > * `TESSERACT_PATH`: Path to OCR folder  
