@@ -1,4 +1,4 @@
-## 🌐 [English README](README.en.md)
+## 🌐 [English README](readme.en.md)
 
 ## ✔ 更新
 点个星吧, 谢谢!  
