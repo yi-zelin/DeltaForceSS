@@ -643,7 +643,7 @@ def main():
             time.sleep(3)
             
             remain_time = min(remain_times)
-            remain_time += 1*60     # 1 min buffer
+            remain_time += 30     # 30 sec buffer
             
             if background_mode:
                 alt_tab()
