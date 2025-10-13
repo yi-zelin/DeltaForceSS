@@ -1,5 +1,9 @@
 ## 🌐 [English README](readme.en.md)
 
+## TODO
+* 全黑截图处理
+* 更好的 terminal 输出
+
 ## ✔ 更新
 点个星吧, 谢谢!  
 应该不会再有功能性更新了  
