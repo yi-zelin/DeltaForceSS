@@ -9,13 +9,17 @@ departments:
       - AUG突击步枪
       - SCAR-H战斗步枪
       - P90冲锋枪
+      - MK4冲锋枪
       - QCQ171冲锋枪
       - SR-3M紧凑突击步枪
       - SKS射手步枪
+      - 复合弓
       - AKM突击步枪
       - M700狙击步枪
       - PSG-1射手步枪
       - SVD狙击步枪
+      - FS-12霰弹枪
+      - MCX LT突击步枪
       - 腾龙突击步枪
       - M14射手步枪
       - AK-12突击步枪
@@ -23,8 +27,9 @@ departments:
       # Level 4
       - 先进热融合全息瞄准镜
       - 先进白热成像战斗瞄准镜
-      - 蜂网遮光罩
       - LPVO多倍率战斗瞄具
+      - M157火控光学系统
+      - 灵眼3/7弹道计算狙击镜
       - 侧置全景红点瞄准镜
       - 侧置XRO快速反应瞄准镜
       - 侧置微型红点瞄准镜
@@ -37,8 +42,7 @@ departments:
       - 6/12神射手变倍狙击镜
       - 视点3倍瞄准镜
       - 1p-29俄制3倍瞄准镜
-      - M157火控光学系统
-      - 灵眼3/7弹道计算狙击镜
+      - 棱镜通用二倍光学瞄具
       # Level 3:
       - 多用途战术增高架
       - Cobra准直式瞄准镜
@@ -71,10 +75,6 @@ departments:
       - 相位战斗前握把
       - 共振人体工程握把
       - 密令斜角握把
-      - RK3后握把
-      - 侵袭后握把
-      - 平衡握把底座
-      - 稳固握把底座
     枪口:
       # Level 4
       - 炽火抑制器
@@ -103,6 +103,7 @@ departments:
     战术:
       # level 4
       - OLIGHT WARRIOR 3S战术手电
+      - 蜂网遮光罩
       - OLIGHT Odin S战术手电
       - 耀斑战术手电
       - PEQ-2红色激光镭指
@@ -133,6 +134,7 @@ departments:
       - 4.6x30mm AP SX
       - 12.7x55mm PS12B
       - .300 BLK
+      - 7.62x39mm SUB
     level_4:
       - 45-70 Govt FMJ
       - 碳纤维刺骨箭矢
@@ -186,6 +188,10 @@ departments:
       - 精密护甲维修包
       - 精密头盔维修包
       - 战地医疗箱
+    level_4:
+      - M2肌肉注射剂
+      - 感知强化剂
+      - 体能强化剂
     level_3:
       - 体能激活针
       - OE2战斗兴奋剂
@@ -203,16 +209,18 @@ departments:
       - 特里克MAS2.0装甲
       - GTO重型战术背包
       - D7战术背包
-      - DAR突击手胸挂
     level_5:
+      - DAR突击手胸挂
       - 黑鹰野战胸挂
       - 飓风战术胸挂
+      - 赤枭装甲防弹面具
       - GN 重型夜视头盔
       - GN 久战重型夜视头盔
       - DICH-1战术头盔
       - GN 重型头盔
       - H09 防爆头盔
       - Mask-1铁壁头盔
+      - 赤枭重装突击背心
       - 重型突击背心
       - FS复合防弹衣
       - Hvk-2防弹衣
@@ -243,27 +251,27 @@ departments:
 departments_coords:
   dash_page:
     tech:
-      free: [276, 790]
+      free: [240, 476]
       free_size: [80,36]
-      timmer: [180, 826]
+      timmer: [156, 538]
       timmer_size: [96, 22]
 
     work:
-      free: [710, 790]
+      free: [592, 476]
       free_size: [80,36]
-      timmer: [614, 826]
+      timmer: [510, 538]
       timmer_size: [96, 22]
 
     medical:
-      free: [1136, 790]
+      free: [240, 828]
       free_size: [80,36]
-      timmer: [1046, 826]
+      timmer: [156, 890]
       timmer_size: [96, 22]
 
     armor:
-      free: [1566, 790]
+      free: [592, 828]
       free_size: [80,36]
-      timmer: [1478, 826]
+      timmer: [510, 890]
       timmer_size: [96, 22]
 
   standard_screen: [1920, 1080]
