@@ -510,7 +510,7 @@ def dash_page():
     if not is_main_page():
         raise IncorrectPageError()
         
-    dash_img = screenshot('binary', 'department_status')
+    dash_img = screenshot('gray', 'department_status')
 
     status = get_remain_times(dash_img)
     processing_department = []
@@ -529,7 +529,7 @@ def dash_page():
             time.sleep(3)
             list_page(dep)
             
-    dash_img = screenshot('binary', 'department_status')
+    dash_img = screenshot('gray', 'department_status')
     status = get_remain_times(dash_img)
     remain_times = []
     print(f'# dash page info:')
