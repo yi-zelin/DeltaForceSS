@@ -199,7 +199,7 @@ def screenshot(type='binary', hint='placeholder', region=None):
     """
     camera = get_camera()
     frame = None
-    max_retries = 4
+    max_retries = 3
     attempts = 0
 
     while attempts < max_retries:
@@ -211,12 +211,6 @@ def screenshot(type='binary', hint='placeholder', region=None):
 
         if frame is not None and not np.any(frame):
             break
-        elif user_config['wake_screen'] and attempts >= 2:
-            # 按shift 尝试激活屏幕
-            ctypes.windll.user32.keybd_event(0x10, 0, 0, 0)
-            time.sleep(0.05)
-            ctypes.windll.user32.keybd_event(0x10, 0, 0x0002, 0)
-            time.sleep(10)
             
         attempts += 1
         
