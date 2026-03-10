@@ -17,6 +17,7 @@ from rapidfuzz import fuzz
 from datetime import datetime
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedSeq
+import ctypes
 
 class IncorrectPageError(Exception):
     def __init__(self, message="未检测到特勤处建造界面"):
@@ -135,7 +136,7 @@ def set_screen_resolution():
     if (width, height) not in valid_resolution:
         raise IncorrectResolution(f'非法分辨率: {width}x{height}, 只支持 {valid_resolution}\n以游戏分辨率为准')
     global scale_factor
-    print(width, height)
+    print(f'当前分辨率: {width} x {height}')
     scale_factor = width / 1920
 
 # Mouse
@@ -198,7 +199,7 @@ def screenshot(type='binary', hint='placeholder', region=None):
     """
     camera = get_camera()
     frame = None
-    max_retries = 3
+    max_retries = 4
     attempts = 0
 
     while attempts < max_retries:
@@ -208,9 +209,18 @@ def screenshot(type='binary', hint='placeholder', region=None):
         else:
             frame = camera.grab()
 
-        if frame is not None:
+        if frame is not None and not np.any(frame):
             break
+        elif user_config['wake_screen'] and attempts >= 2:
+            # 按shift 尝试激活屏幕
+            ctypes.windll.user32.keybd_event(0x10, 0, 0, 0)
+            time.sleep(0.05)
+            ctypes.windll.user32.keybd_event(0x10, 0, 0x0002, 0)
+            time.sleep(10)
+            
         attempts += 1
+        
+            
 
     if frame is None:
         raise Exception(f'! Failed: screenshot after {max_retries} attempts !')
@@ -329,7 +339,7 @@ def OCR_price(image):
     price = re.sub(r'[^\d]', '', text)
     if price == '':
         return None
-    print(f'✅ OCR price: {price}')
+    print(f'✅ OCR 价格: {price}')
     return int(price)
 
 def is_main_page():
@@ -419,9 +429,9 @@ def initalize_preparation():
     time.sleep(3)
     price = buy_material()
     if price == -1:
-        print(f'! Failed to buy material: maximum retry attempts reached')
+        print(f'! 物品购买失败, 达到了最大尝试次数, 可能是交易行缺货')
     elif price == 0:
-        print(f'! There is trade in only item')
+        print(f'! 缺少无法购买的物品, 例如高级燃料， 钛合金')
         keyboard.send('esc')
         time.sleep(1)
     buy_state = find_buy_state()
@@ -532,18 +542,18 @@ def dash_page():
     dash_img = screenshot('gray', 'department_status')
     status = get_remain_times(dash_img)
     remain_times = []
-    print(f'# dash page info:')
+    print(f'制造界面:')
     for dep, state in status:
         if state == -2:
             if wait_list[dep]:
                 remain_times.append(0)
-            print(f'\t{dep}\t not started')
+            print(f'\t{dep}\t 未占用')
         elif state == -1:
             remain_times.append(0)
-            print(f'\t{dep}\t completed!')
+            print(f'\t{dep}\t 完成!')
         else:
             remain_times.append(state)
-            print(f'\t{dep}\t working:\t{state // 3600}:{(state % 3600) // 60:02d}:{state % 60:02d}')
+            print(f'\t{dep}\t 占用中, 剩余时间:\t{state // 3600}:{(state % 3600) // 60:02d}:{state % 60:02d}')
                 
     return remain_times
 
@@ -577,8 +587,8 @@ def list_page_operation(department, category, target):
         specialcase = '侧置' in last_top_item
 
         if score >= factor and not specialcase:
-            print(f'! {department}.{category}.{target} not found')
-            print(f'with: last: {last_top_item}, current: {current_top_item}, score: {score}')
+            print(f'! {department}.{category}.{target} 未找到')
+            print(f'具体信息: last: {last_top_item}, OCR 结果: {current_top_item}, 相似度: {score}')
             keyboard.send('esc')
             # time.sleep(1)
             return
@@ -602,15 +612,15 @@ def list_page_operation(department, category, target):
 def print_restart_info(remain_time):
     restart_time = datetime.now() + timedelta(seconds=remain_time)
     
-    time_str = f"Restart after: {remain_time // 3600}:{(remain_time % 3600) // 60:02d}:{remain_time % 60:02d}"
-    restart_str = f"Restart at: {restart_time.strftime('%H:%M:%S')}"
-    max_length = max(len(time_str), len(restart_str)) + 8
+    time_str = f"距离下一次激活: {remain_time // 3600}:{(remain_time % 3600) // 60:02d}:{remain_time % 60:02d}"
+    restart_str = f"下一次激活时间: {restart_time.strftime('%H:%M:%S')}"
+    max_length = max(len(time_str), len(restart_str)) + 15
     border = '#' * max_length
     
     output = (
         f"\n{border}\n"
-        f"#{time_str.center(max_length - 2)}#\n"
-        f"#{restart_str.center(max_length - 2)}#\n"
+        f"#{time_str.center(max_length - 9)}#\n"
+        f"#{restart_str.center(max_length - 9)}#\n"
         f"{border}\n\n"
     )
     
