@@ -210,7 +210,7 @@ def screenshot(type='binary', hint='placeholder', region=None):
             frame = camera.grab()
 
         # 不是None且不全黑
-        if frame is not None and np.any(frame):
+        if frame is not None:
             break
             
         attempts += 1
