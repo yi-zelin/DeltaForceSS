@@ -5,18 +5,18 @@
 
 tech:
 # 技术中心
-  - [影袭导轨枪托, -1]
+  - [3/7可调倍率狙击镜, -1]
 work:
 # 工作台
-  - [4.6x30mm AP SX, -1]
+  - [9x39mm BP, -1]
 medical:
 # 制药台
-  - [OE2战斗兴奋剂, -1]
+  - [战地医疗箱, -1]
 armor:
 # 防具台
   - [精英防弹背心, -1]
 
 # 高级设置
-TESSERACT_PATH: .\dist\Tesseract-OCR\tesseract.exe
+TESSERACT_PATH: .\Tesseract-OCR\tesseract.exe
 background_mode: false
-debug_mode: true
+debug_mode: false

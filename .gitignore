@@ -7,5 +7,6 @@ manifest.xml
 build.spec
 build.bat
 user_config copy.yaml
+.vscode
 /Tesseract-OCR
 /dist
