@@ -115,6 +115,9 @@ departments:
   work:
   # 工作台
     level_6:
+      - .50 BMG M903 SLAP
+      - .50 BMG M3 K-0
+      - .50 BMG M10 RAZ0R
       - 7.62x54R SNB
       - 7.62x51mm M61
       - 6.8x51mm AP
@@ -134,7 +137,8 @@ departments:
       - 4.6x30mm AP SX
       - 12.7x55mm PS12B
       - .300 BLK
-      - 7.62x39mm SUB
+      - .50 AE AP
+      - 5.45x39mm BS ST+
     level_4:
       - 45-70 Govt FMJ
       - 碳纤维刺骨箭矢
@@ -156,6 +160,8 @@ departments:
       - .50 AE FMJ
       - .45 ACP AP
       - .357 Magnum FMJ
+      - 5.45x39mm BT ST
+      - 5.56x45mm M855A1 APC+
     level_3:
       - 45-70 Govt RN
       - 玻纤柳叶箭矢
