@@ -251,28 +251,28 @@ departments:
 departments_coords:
   dash_page:
     tech:
-      free: [240, 476]
+      free: [240, 436]
       free_size: [80,36]
-      timmer: [156, 538]
-      timmer_size: [96, 22]
+      timmer: [164, 474]
+      timmer_size: [98, 26]
 
     work:
-      free: [592, 476]
+      free: [592, 436]
       free_size: [80,36]
-      timmer: [510, 538]
-      timmer_size: [96, 22]
+      timmer: [518, 474]
+      timmer_size: [98, 26]
 
     medical:
-      free: [240, 828]
+      free: [240, 788]
       free_size: [80,36]
-      timmer: [156, 890]
-      timmer_size: [96, 22]
+      timmer: [164, 826]
+      timmer_size: [98, 26]
 
     armor:
-      free: [592, 828]
+      free: [592, 788]
       free_size: [80,36]
-      timmer: [510, 890]
-      timmer_size: [96, 22]
+      timmer: [518, 826]
+      timmer_size: [98, 26]
 
   standard_screen: [1920, 1080]
   list_black_spot: [110, 540]
@@ -294,7 +294,7 @@ departments_coords:
     - [906, 874]
   price_position: [964, 750]
 
-  tech_dep_region: [194, 248, 90, 30]
+  tech_dep_region: [194, 260, 90, 30]
 
 OCR_configs:
   tech: --psm 7 -l chi_sim
