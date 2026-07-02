@@ -130,7 +130,9 @@ departments:
       - 7.62x51mm M62
       - 7.62x39mm AP
       - 6.8x51mm Hybrid
+      - 6.8x51mm PLY-III
       - 5.8x42mm DVC12
+      - 5.8x42mm DVC12 +P
       - 5.7x28mm SS190
       - 5.56x45mm M995
       - 5.45x39mm BS
@@ -143,12 +145,16 @@ departments:
       - 45-70 Govt FMJ
       - 碳纤维刺骨箭矢
       - 9x39mm SP6
+      - 9x39mm PAB-9
       - 9x19mm PBP
+      - 9x19mm CT
       - 7.62x54R LPS
       - 7.62x51mm M80
       - 7.62x39mm BP
       - 6.8x51mm FMJ
+      - 6.8x51mm PLY-II
       - 5.8x42mm DBP10
+      - 5.8x42mm DBP10 +P
       - 5.7x28mm SS193
       - 5.56x45mm M855A1
       - 5.45x39mm BT
@@ -159,6 +165,7 @@ departments:
       - 12 Gauge独头 AP-20
       - .50 AE FMJ
       - .45 ACP AP
+      - .45 ACP CT
       - .357 Magnum FMJ
       - 5.45x39mm BT ST
       - 5.56x45mm M855A1 APC+
@@ -166,11 +173,13 @@ departments:
       - 45-70 Govt RN
       - 玻纤柳叶箭矢
       - 9x39mm SP5
+      - 9x39mm PAB-7
       - 9x19mm AP6.3
       - 7.62x54R T46M
       - 7.62x51mm BPZ
       - 7.62x39mm PS
       - 5.8x42mm DVP88
+      - 6.8x51mm PLY-I
       - 5.7x28mm L191
       - 5.56x45mm M855
       - 5.45x39mm PS
@@ -300,11 +309,11 @@ departments_coords:
     - [906, 874]
   price_position: [964, 750]
 
-  tech_dep_region: [194, 260, 90, 30]
+  tech_dep_region: [194, 245, 90, 35]
 
 OCR_configs:
   tech: --psm 7 -l chi_sim
-  work: --psm 7 -l chi_sim -c tessedit_char_whitelist= 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz双头弹独箭形号霰射鼠
+  work: --psm 7 -l chi_sim -c tessedit_char_whitelist= 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+双头弹独箭形号霰射鼠
   medical: --psm 7 -l chi_sim
   armor: --psm 7 -l chi_sim
 
