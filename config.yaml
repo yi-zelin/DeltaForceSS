@@ -309,7 +309,7 @@ departments_coords:
     - [906, 874]
   price_position: [964, 750]
 
-  tech_dep_region: [194, 245, 90, 35]
+  tech_dep_region: [194, 252, 90, 35]
 
 OCR_configs:
   tech: --psm 7 -l chi_sim
